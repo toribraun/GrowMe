@@ -24,8 +24,8 @@
             var message = messageEventArgs.Message;
             if (message?.Type == MessageType.Text)
             {
-                var newMesage = $"Hello, {message.Chat.FirstName}!";
-                await client.SendTextMessageAsync(message.Chat.Id, newMesage);
+                var newMessage = $"Hello, {message.Chat.FirstName}!";
+                await client.SendTextMessageAsync(message.Chat.Id, newMessage);
             }
         }
     }
