@@ -44,8 +44,10 @@ namespace Infrastructure
                 new User(1, "Alice"),
                 new User(2, "Bob")
             };
-            
-            csvDB.AddUsers(usersNew);
+            foreach (var user in usersNew)
+            {
+                csvDB.AddUser(user);
+            }
             var addedUsers = csvDB.GetUsers();
             CollectionAssert.AreEquivalent(usersNew, addedUsers);
         }
@@ -54,7 +56,7 @@ namespace Infrastructure
         public void UpdateUserStatus()
         {
             var newUser = new User(33, "Eva");
-            csvDB.AddUsers(new List<User> {newUser});
+            csvDB.AddUser(newUser);
             csvDB.UpdateUserStatus(newUser, UserStatus.SendUserName);
             var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
             Assert.AreEqual(UserStatus.SendUserName, addedUser.Status);
@@ -70,8 +72,10 @@ namespace Infrastructure
                 new Plant {Name = "cactus", UserId = 2, WateringInterval = 7, AddingDate = DateTime.Parse("11.11.2020"), 
                     NextWateringTime = DateTime.Parse("11.11.2020 11:00:00"), WateringStatus = false}
             };
-            
-            csvDB.AddPlants(plantsNew);
+            foreach (var plant in plantsNew)
+            {
+                csvDB.AddPlant(plant);
+            }
             var addedPlantsByUser1 = csvDB.GetPlantsByUser(new User(1, "Alice")).ToList();
             Assert.AreEqual(1, addedPlantsByUser1.Count());
             Assert.AreEqual(plantsNew.First(), addedPlantsByUser1.First());

@@ -5,14 +5,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper.Configuration.Attributes;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure
 {
     public interface IDataBase
     {
-        void AddUsers(IEnumerable<User> users);
-        void AddPlants(IEnumerable<Plant> users);
+        void AddUser(User user);
+        void AddPlant(Plant plant);
         IEnumerable<User> GetUsers();
         IEnumerable<Plant> GetPlantsByUser(User user);
         void UpdateUserStatus(User currentUser, UserStatus newStatus);
@@ -113,6 +112,7 @@ namespace Infrastructure
             this.plantsPath = plantsPath;
             this.commonPlantsPath = commonPlantsPath;
         }
+        
         public IEnumerable<User> GetUsers()
         {
             using (var stream = File.Open(usersPath, FileMode.Open))
@@ -123,7 +123,13 @@ namespace Infrastructure
                 return csvReader.GetRecords<User>().ToList();;
             }
         }
-        public void AddUsers(IEnumerable<User> users)
+
+        public void AddUser(User user)
+        {
+            AddUsers(new List<User> { user });
+        }
+        
+        private void AddUsers(IEnumerable<User> users)
         {
             DoRecords(users, usersPath);
         }
@@ -142,10 +148,14 @@ namespace Infrastructure
             using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
             csvWriter.Configuration.Delimiter = ";";
             csvWriter.WriteRecords(users);
-            
         }
 
-        public void AddPlants(IEnumerable<Plant> plants)
+        public void AddPlant(Plant plant)
+        {
+            AddPlants(new List<Plant> { plant });
+        }
+        
+        private void AddPlants(IEnumerable<Plant> plants)
         {
             DoRecords(plants, plantsPath);
         }
@@ -176,5 +186,4 @@ namespace Infrastructure
                 throw new FileNotFoundException();
         }
     }
-
 }
