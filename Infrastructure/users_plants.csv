@@ -1,3 +1,1 @@
-name;userId;nextWateringTime;wateringStatus;addingDate
-aloe;2;11.11.2020 11:00:00;False;11.10.2020
-cactus;1;11.11.2020 11:00:00;False;11.10.2020
+name;userId;wateringInterval;nextWateringTime;wateringStatus;addingDate

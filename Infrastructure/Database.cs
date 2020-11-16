@@ -5,21 +5,34 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper.Configuration.Attributes;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure
 {
     public interface IDataBase
     {
         void AddUsers(IEnumerable<User> users);
-        IEnumerable<Plant> GetPlantsUser(User user);
+        void AddPlants(IEnumerable<Plant> users);
+        IEnumerable<User> GetUsers();
+        IEnumerable<Plant> GetPlantsByUser(User user);
+        void UpdateUserStatus(User currentUser, UserStatus newStatus);
     }
-    
+
+    public enum UserStatus
+    {
+        SendUserName,
+        SendPlantName,
+        SendPlantWateringInterval,
+    }
+
     public class User
     {
         [Name("id")]
         public int Id { get; set; }
         [Name("name")]
         public string Name { get; set; }
+        [Name("status")]
+        public UserStatus Status { get; set; }
         
         public User() {}
 
@@ -50,6 +63,8 @@ namespace Infrastructure
         public string Name { get; set; }
         [Name("userId")]
         public int UserId { get; set; }
+        [Name("wateringInterval")]
+        public int WateringInterval { get; set; }
         [Name("nextWateringTime")]
         public DateTime NextWateringTime { get; set; }
         [Name("wateringStatus")]
@@ -58,6 +73,18 @@ namespace Infrastructure
         public DateTime AddingDate { get; set; }
         
         public Plant() {}
+
+        public Plant(string name, int userId)
+        {
+            Name = name;
+            UserId = userId;
+            AddingDate = DateTime.Today;
+        }
+
+        public void UpdateNextWateringTime()
+        {
+            NextWateringTime = DateTime.Now.AddDays(WateringInterval);
+        }
         
         public override bool Equals(object? obj)
         {
@@ -100,10 +127,38 @@ namespace Infrastructure
         {
             DoRecords(users, usersPath);
         }
-        
+
+        public void UpdateUserStatus(User currentUser, UserStatus newStatus)
+        {
+            var users = GetUsers();
+            foreach (var user in users)
+            {
+                if (!user.Equals(currentUser)) 
+                    continue;
+                user.Status = newStatus;
+                break;
+            }
+            using var streamWriter = new StreamWriter(usersPath);
+            using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
+            csvWriter.Configuration.Delimiter = ";";
+            csvWriter.WriteRecords(users);
+            
+        }
+
         public void AddPlants(IEnumerable<Plant> plants)
         {
             DoRecords(plants, plantsPath);
+        }
+
+        public IEnumerable<Plant> GetPlantsByUser(User user)
+        {
+            using var reader = new StreamReader(plantsPath);
+            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+            csvReader.Configuration.Delimiter = ";";
+            return csvReader
+                .GetRecords<Plant>()
+                .Where(plant => plant.UserId == user.Id)
+                .ToList();
         }
         
         private void DoRecords<T>(IEnumerable<T> records, string filePath)
@@ -119,17 +174,6 @@ namespace Infrastructure
             }
             else
                 throw new FileNotFoundException();
-        }
-        
-        public IEnumerable<Plant> GetPlantsUser(User user)
-        {
-            using var reader = new StreamReader(plantsPath);
-            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
-            csvReader.Configuration.Delimiter = ";";
-            return csvReader
-                .GetRecords<Plant>()
-                .Where(plant => plant.UserId == user.Id)
-                .ToList();
         }
     }
 

@@ -19,13 +19,13 @@
             client.StopReceiving();
         }
 
-        private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
+        private static void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
             if (message?.Type == MessageType.Text)
             {
                 var newMessage = $"Hello, {message.Chat.FirstName}!";
-                await client.SendTextMessageAsync(message.Chat.Id, newMessage);
+                client.SendTextMessageAsync(message.Chat.Id, newMessage);
             }
         }
     }

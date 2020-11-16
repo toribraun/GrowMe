@@ -16,12 +16,12 @@ namespace Infrastructure
         {
             using (var fsUsers = new FileStream("test_users.csv", FileMode.Create))
             {
-                var array = System.Text.Encoding.Default.GetBytes("id;name\n");
+                var array = System.Text.Encoding.Default.GetBytes("id;name;status\n");
                 fsUsers.Write(array, 0, array.Length);
             }
             using (var fsPlants = new FileStream("test_users_plants.csv", FileMode.Create))
             {
-                var array = System.Text.Encoding.Default.GetBytes("name;userId;nextWateringTime;wateringStatus;addingDate\n");
+                var array = System.Text.Encoding.Default.GetBytes("name;userId;wateringInterval;nextWateringTime;wateringStatus;addingDate\n");
                 fsPlants.Write(array, 0, array.Length);
             }
 
@@ -51,18 +51,28 @@ namespace Infrastructure
         }
         
         [Test]
+        public void UpdateUserStatus()
+        {
+            var newUser = new User(33, "Eva");
+            csvDB.AddUsers(new List<User> {newUser});
+            csvDB.UpdateUserStatus(newUser, UserStatus.SendUserName);
+            var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
+            Assert.AreEqual(UserStatus.SendUserName, addedUser.Status);
+        }
+        
+        [Test]
         public void AddAndGetPlantsByUsers()
         {
             var plantsNew = new List<Plant>()
             {
-                new Plant {Name = "tulpan", UserId = 1, AddingDate = DateTime.Parse("11.11.2020"), 
+                new Plant {Name = "tulpan", UserId = 1, WateringInterval = 3, AddingDate = DateTime.Parse("11.11.2020"), 
                     NextWateringTime = DateTime.Parse("11.11.2020 11:00:00"), WateringStatus = false},
-                new Plant {Name = "cactus", UserId = 2, AddingDate = DateTime.Parse("11.11.2020"), 
+                new Plant {Name = "cactus", UserId = 2, WateringInterval = 7, AddingDate = DateTime.Parse("11.11.2020"), 
                     NextWateringTime = DateTime.Parse("11.11.2020 11:00:00"), WateringStatus = false}
             };
             
             csvDB.AddPlants(plantsNew);
-            var addedPlantsByUser1 = csvDB.GetPlantsUser(new User(1, "Alice")).ToList();
+            var addedPlantsByUser1 = csvDB.GetPlantsByUser(new User(1, "Alice")).ToList();
             Assert.AreEqual(1, addedPlantsByUser1.Count());
             Assert.AreEqual(plantsNew.First(), addedPlantsByUser1.First());
         }
