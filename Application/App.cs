@@ -3,7 +3,7 @@ using Infrastructure;
 
 namespace Application
 {
-    class App
+    public class App
     {
         private CsvDatabase database;
 

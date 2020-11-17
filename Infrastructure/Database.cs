@@ -27,7 +27,7 @@ namespace Infrastructure
     public class User
     {
         [Name("id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Name("name")]
         public string Name { get; set; }
         [Name("status")]
@@ -35,7 +35,7 @@ namespace Infrastructure
         
         public User() {}
 
-        public User(int id, string name)
+        public User(long id, string name)
         {
             Id = id;
             Name = name;
