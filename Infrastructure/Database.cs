@@ -16,6 +16,9 @@ namespace Infrastructure
         IEnumerable<Plant> GetPlantsByUser(User user);
         void UpdateUserStatus(User currentUser, UserStatus newStatus);
         UserStatus GetUserStatus(User currentUser);
+        void UpdateWateringInterval(User currentUser, int newWateringInterval);
+        void UpdateUsersActivePlant(User currentUser, string plantName);
+        string GetActivePlantByUser(User currentUser);
     }
 
     public enum UserStatus
@@ -34,8 +37,14 @@ namespace Infrastructure
         public string Name { get; set; }
         [Name("status")]
         public UserStatus Status { get; set; }
+        [Name("activePlantName")]
+        public string ActivePlantName { get; set; }
         
         public User() {}
+        public User(long id)
+        {
+            Id = id;
+        }
 
         public User(long id, string name)
         {
@@ -49,12 +58,12 @@ namespace Infrastructure
                 return false;
             if (obj.GetType() != GetType())
                 return false;
-            return Id == ((User)obj).Id && Name == ((User)obj).Name;
+            return Id == ((User)obj).Id;
         }
 
         public override int GetHashCode()
         {
-            return (Id + Name).GetHashCode();
+            return Id.GetHashCode();
         }
     }
 
@@ -155,6 +164,43 @@ namespace Infrastructure
             using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
             csvWriter.Configuration.Delimiter = ";";
             csvWriter.WriteRecords(users);
+        }
+        
+        public void UpdateUsersActivePlant(User currentUser, string plantName)
+        {
+            var users = GetUsers();
+            foreach (var user in users)
+            {
+                if (!user.Equals(currentUser)) 
+                    continue;
+                user.ActivePlantName= plantName;
+                break;
+            }
+            using var streamWriter = new StreamWriter(usersPath);
+            using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
+            csvWriter.Configuration.Delimiter = ";";
+            csvWriter.WriteRecords(users);
+        }
+
+        public string GetActivePlantByUser(User currentUser)
+        {
+            return (from user in GetUsers() where user.Id == currentUser.Id select user.ActivePlantName).FirstOrDefault();
+        }
+
+        public void UpdateWateringInterval(User currentUser, int newWateringInterval)
+        {
+            var plants = GetPlantsByUser(currentUser);
+            foreach (var plant in plants)
+            {
+                if (plant.Name != currentUser.ActivePlantName)
+                    continue;
+                plant.WateringInterval = newWateringInterval;
+                break;
+            }
+            using var streamWriter = new StreamWriter(plantsPath);
+            using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
+            csvWriter.Configuration.Delimiter = ";";
+            csvWriter.WriteRecords(plants);
         }
 
         public UserStatus GetUserStatus(User currentUser)

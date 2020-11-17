@@ -16,7 +16,7 @@ namespace Infrastructure
         {
             using (var fsUsers = new FileStream("test_users.csv", FileMode.Create))
             {
-                var array = System.Text.Encoding.Default.GetBytes("id;name;status\n");
+                var array = System.Text.Encoding.Default.GetBytes("id;name;status;activePlantName\n");
                 fsUsers.Write(array, 0, array.Length);
             }
             using (var fsPlants = new FileStream("test_users_plants.csv", FileMode.Create))

@@ -26,5 +26,26 @@ namespace Application
             return database.GetPlantsByUser(user)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
         }
+
+        public void ChangeUserStatus(long userId, UserStatus newStatus)
+        {
+            database.UpdateUserStatus(new User(userId), newStatus);
+        }
+
+        public UserStatus GetUserStatus(long userId)
+        {
+            return database.GetUserStatus(new User(userId));
+        }
+
+        public void GetNewPlantName(long userId, string plantName)
+        {
+            database.UpdateUserStatus(new User(userId), UserStatus.SendPlantWateringInterval);
+            database.UpdateUsersActivePlant(new User(userId), plantName);
+        }
+        
+        public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
+        {
+            
+        }
     }
 }

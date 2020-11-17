@@ -53,7 +53,19 @@
                 }
                 else if (messageText.ToLower().Contains("добавить"))
                 {
-                    answer = "Это ещё не готово:(";
+                    app.ChangeUserStatus(message.Chat.Id, UserStatus.SendPlantName);
+                    answer = "Как назовём твоё растение?";
+                }
+                else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantName)
+                {
+                    app.GetNewPlantName(message.Chat.Id, messageText);
+                    answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n " +
+                             "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
+                }
+                else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantWateringInterval)
+                {
+                    app.GetNewPlantName(message.Chat.Id, messageText);
+                    answer = "";
                 }
 
                 SendAnswer(message.Chat, answer);
