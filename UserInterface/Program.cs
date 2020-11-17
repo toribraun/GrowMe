@@ -79,9 +79,15 @@ namespace UserInterface
                 }
                 else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantName)
                 {
-                    app.SetNewPlantName(message.Chat.Id, messageText);
-                    answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
-                             "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
+                    if (app.SetNewPlantName(message.Chat.Id, messageText))
+                    {
+                        answer = "У тебя уже есть растение с таким именем! Придумай другое.";
+                    }
+                    else
+                    {
+                        answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
+                                 "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
+                    }
                 }
                 else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantWateringInterval)
                 {

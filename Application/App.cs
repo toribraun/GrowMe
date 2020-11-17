@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Infrastructure;
 
 namespace Application
@@ -37,9 +38,15 @@ namespace Application
             return database.GetUserById(userId).Status;
         }
 
-        public void SetNewPlantName(long userId, string plantName)
+        public bool SetNewPlantName(long userId, string plantName)
         {
+            if (database.GetPlantsByUser(database.GetUserById(userId)).Any(
+                plant => plant.Name.Equals(plantName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
             database.UpdateUser(new User(userId) {Status = UserStatus.SendPlantWateringInterval, ActivePlantName = plantName});
+            return false;
         }
         
         public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
