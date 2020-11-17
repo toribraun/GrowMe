@@ -56,11 +56,11 @@ namespace Infrastructure
         [Test]
         public void UpdateAndGetUserStatus()
         {
-            var newUser = new User(33, "Eva");
+            var newUser = new User(33, "Eva") {Status = UserStatus.SendUserName};
             csvDB.AddUser(newUser);
-            csvDB.UpdateUserStatus(newUser, UserStatus.SendUserName);
+            csvDB.UpdateUser(newUser);
             //var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
-            Assert.AreEqual(UserStatus.SendUserName, csvDB.GetUserStatus(newUser));
+            Assert.AreEqual(UserStatus.SendUserName, csvDB.GetUserById(newUser.Id).Status);
         }
         
         [Test]

@@ -1,4 +1,6 @@
-﻿namespace UserInterface
+﻿using Telegram.Bot.Types.ReplyMarkups;
+
+namespace UserInterface
 {
     using System;
     using Application;
@@ -14,6 +16,18 @@
         private static TelegramBotClient client;
         private static string token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
         public static App app = new App();
+        private static IReplyMarkup mainMenuKeyboard = new ReplyKeyboardMarkup(
+            new[]
+        {
+            new KeyboardButton("Мои растения"),
+            new KeyboardButton("Добавить растение")
+        }, true);
+
+        private static IReplyMarkup cancelKeyboard = new ReplyKeyboardMarkup(
+            new[]
+        {
+            new KeyboardButton("Отмена")
+        }, true);
 
         static void Main(string[] args)
         {
@@ -27,7 +41,9 @@
         private static void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
-            string answer = "Я пока не знаю, что с этим делать.";
+            var answer = "Я пока не знаю, что с этим делать.";
+            ReplyKeyboardMarkup keyboard;
+
             if (message?.Type == MessageType.Text)
             {
                 var messageText = message.Text;
@@ -38,6 +54,11 @@
                 else if (messageText == "/help")
                 {
                     answer = Help(message.Chat);
+                }
+                else if (messageText == "Отмена")
+                {
+                    app.Cancel(message.Chat.Id);
+                    answer = "Главное меню";
                 }
                 else if (messageText.ToLower().Contains("мои растения"))
                 {
@@ -58,17 +79,41 @@
                 }
                 else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantName)
                 {
-                    app.GetNewPlantName(message.Chat.Id, messageText);
-                    answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n " +
+                    app.SetNewPlantName(message.Chat.Id, messageText);
+                    answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
                              "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
                 }
                 else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantWateringInterval)
                 {
-                    app.GetNewPlantName(message.Chat.Id, messageText);
-                    answer = "";
+                    answer = "Пожалуйста, введи целое положительное число";
+                    try
+                    {
+                        if (int.TryParse(messageText, out var interval))
+                        {
+                            app.AddNewPlantFromActivePlantWithWateringInterval(message.Chat.Id, interval);
+                            answer = "Поздравляем, твоё растение добавлено!";
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                    }
                 }
 
-                SendAnswer(message.Chat, answer);
+                if (app.GetUserStatus(message.Chat.Id) == UserStatus.DefaultStatus)
+                {
+                    keyboard = (ReplyKeyboardMarkup)mainMenuKeyboard;
+                }
+                else
+                {
+                    keyboard = (ReplyKeyboardMarkup)cancelKeyboard;
+                }
+
+                if (keyboard != null)
+                {
+                    keyboard.OneTimeKeyboard = true;
+                }
+
+                SendAnswer(message.Chat, answer, keyboard);
             }
         }
 
@@ -77,8 +122,8 @@
             var user = new Infrastructure.User(chat.Id, chat.FirstName);
             if (app.AddUser(user))
             {
-                return $"Привет, {chat.FirstName}! " +
-                    $"Я - бот, который будет помогать тебе в уходе за растениями. " +
+                return $"Привет, {chat.FirstName}!\n" +
+                    $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
                     $"Введи /help для справки.";
             }
 
@@ -90,9 +135,9 @@
             return "Здесь должна быть справка, но её пока нет";
         }
 
-        private static void SendAnswer(Chat chat, string answer)
+        private static void SendAnswer(Chat chat, string answer, IReplyMarkup rm)
         {
-            client.SendTextMessageAsync(chat.Id, answer);
+            client.SendTextMessageAsync(chat.Id, answer, replyMarkup: rm);
         }
     }
 }

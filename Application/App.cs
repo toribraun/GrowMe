@@ -29,23 +29,28 @@ namespace Application
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
         {
-            database.UpdateUserStatus(new User(userId), newStatus);
+            database.UpdateUser(new User(userId) {Status = newStatus});
         }
 
         public UserStatus GetUserStatus(long userId)
         {
-            return database.GetUserStatus(new User(userId));
+            return database.GetUserById(userId).Status;
         }
 
-        public void GetNewPlantName(long userId, string plantName)
+        public void SetNewPlantName(long userId, string plantName)
         {
-            database.UpdateUserStatus(new User(userId), UserStatus.SendPlantWateringInterval);
-            database.UpdateUsersActivePlant(new User(userId), plantName);
+            database.UpdateUser(new User(userId) {Status = UserStatus.SendPlantWateringInterval, ActivePlantName = plantName});
         }
         
         public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
         {
-            
+            database.AddPlant(new Plant(database.GetUserById(userId).ActivePlantName, userId, wateringInterval));
+            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+        }
+
+        public void Cancel(long userId)
+        {
+            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
         }
     }
 }
