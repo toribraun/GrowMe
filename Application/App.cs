@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Infrastructure;
 
@@ -20,6 +21,20 @@ namespace Application
                 return false;
             database.AddUser(user);
             return true;
+        }
+
+        public bool UserExists(long userId)
+        {
+            var user = database.GetUserById(userId);
+            try
+            {
+                var id = user.Id;
+                return true;
+            }
+            catch (NullReferenceException)
+            {
+                return false;
+            }
         }
 
         public string GetPlantsByUser(User user)

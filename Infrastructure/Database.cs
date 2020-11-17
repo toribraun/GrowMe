@@ -153,6 +153,8 @@ namespace Infrastructure
             {
                 if (!users[i].Equals(newUser)) 
                     continue;
+                if (newUser.Name == null)
+                    newUser.Name = users[i].Name;
                 users[i] = newUser;
                 break;
             }

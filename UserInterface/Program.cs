@@ -10,7 +10,6 @@ namespace UserInterface
     using Telegram.Bot.Types;
     using Telegram.Bot.Types.Enums;
 
-
     class Program
     {
         private static TelegramBotClient client;
@@ -43,11 +42,10 @@ namespace UserInterface
             var message = messageEventArgs.Message;
             var answer = "Я пока не знаю, что с этим делать.";
             ReplyKeyboardMarkup keyboard;
-
             if (message?.Type == MessageType.Text)
             {
                 var messageText = message.Text;
-                if (messageText == "/start")
+                if (messageText.Equals("/start") || !app.UserExists(message.Chat.Id))
                 {
                     answer = GreetAtStart(message.Chat);
                 }
