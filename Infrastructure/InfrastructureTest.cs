@@ -50,16 +50,17 @@ namespace Infrastructure
             }
             var addedUsers = csvDB.GetUsers();
             CollectionAssert.AreEquivalent(usersNew, addedUsers);
+            Assert.AreEqual(usersNew[0], csvDB.GetUserById(usersNew[0].Id));
         }
         
         [Test]
-        public void UpdateUserStatus()
+        public void UpdateAndGetUserStatus()
         {
             var newUser = new User(33, "Eva");
             csvDB.AddUser(newUser);
             csvDB.UpdateUserStatus(newUser, UserStatus.SendUserName);
-            var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
-            Assert.AreEqual(UserStatus.SendUserName, addedUser.Status);
+            //var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
+            Assert.AreEqual(UserStatus.SendUserName, csvDB.GetUserStatus(newUser));
         }
         
         [Test]

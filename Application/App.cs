@@ -5,7 +5,7 @@ namespace Application
 {
     public class App
     {
-        private CsvDatabase database;
+        private IDataBase database;
 
         public App()
         {

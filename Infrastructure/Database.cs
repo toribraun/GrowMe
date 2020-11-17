@@ -15,10 +15,12 @@ namespace Infrastructure
         IEnumerable<User> GetUsers();
         IEnumerable<Plant> GetPlantsByUser(User user);
         void UpdateUserStatus(User currentUser, UserStatus newStatus);
+        UserStatus GetUserStatus(User currentUser);
     }
 
     public enum UserStatus
     {
+        DefaultStatus,
         SendUserName,
         SendPlantName,
         SendPlantWateringInterval,
@@ -124,6 +126,11 @@ namespace Infrastructure
             }
         }
 
+        public User GetUserById(long userId)
+        {
+            return (from user in GetUsers() where user.Id == userId select user).FirstOrDefault();
+        }
+
         public void AddUser(User user)
         {
             AddUsers(new List<User> { user });
@@ -148,6 +155,11 @@ namespace Infrastructure
             using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
             csvWriter.Configuration.Delimiter = ";";
             csvWriter.WriteRecords(users);
+        }
+
+        public UserStatus GetUserStatus(User currentUser)
+        {
+            return (from user in GetUsers() where user.Id == currentUser.Id select user.Status).FirstOrDefault();
         }
 
         public void AddPlant(Plant plant)
