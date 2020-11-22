@@ -37,6 +37,11 @@ namespace Application
             }
         }
 
+        public User GetUserById(long userId)
+        {
+            return database.GetUserById(userId);
+        }
+
         public string GetPlantsByUser(User user)
         {
             return database.GetPlantsByUser(user)

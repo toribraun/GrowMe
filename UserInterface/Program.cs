@@ -1,6 +1,4 @@
-﻿using Telegram.Bot.Types.ReplyMarkups;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
     using System;
     using Application;
@@ -9,12 +7,14 @@ namespace UserInterface
     using Telegram.Bot.Args;
     using Telegram.Bot.Types;
     using Telegram.Bot.Types.Enums;
+    using Telegram.Bot.Types.ReplyMarkups;
 
-    class Program
+    public class Program
     {
+        private static App app = new App();
+        private static ICommandExecutor executor = new CommandExecutor(app);
         private static TelegramBotClient client;
         private static string token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
-        public static App app = new App();
         private static IReplyMarkup mainMenuKeyboard = new ReplyKeyboardMarkup(
             new[]
         {
@@ -28,8 +28,24 @@ namespace UserInterface
             new KeyboardButton("Отмена")
         }, true);
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
+            var commands = new IUserCommand[]
+                {
+                    new Commands.StartCommand(),
+                    new Commands.HelpCommand(),
+                    new Commands.GetPlantsCommand(),
+                    new Commands.AddPlantCommand(),
+                    new Commands.CancelCommand()
+                };
+            var commonStatus = new UserStatus[] { UserStatus.DefaultStatus, UserStatus.SendUserName };
+            for (int i = 0; i < 4; i++)
+            {
+                executor.AddCommand(commands[i], commonStatus);
+            }
+
+            executor.AddCommand(commands[4], UserStatus.SendPlantName);
+            executor.AddCommand(commands[4], UserStatus.SendPlantWateringInterval);
             client = new TelegramBotClient(token);
             client.OnMessage += BotOnMessageReceived;
             client.StartReceiving();
@@ -40,68 +56,11 @@ namespace UserInterface
         private static void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
-            var answer = "Я пока не знаю, что с этим делать.";
+            var answer = "Я пока не знаю, что с этим делать!";
             ReplyKeyboardMarkup keyboard;
             if (message?.Type == MessageType.Text)
             {
-                var messageText = message.Text;
-                if (messageText.Equals("/start") || !app.UserExists(message.Chat.Id))
-                {
-                    answer = GreetAtStart(message.Chat);
-                }
-                else if (messageText == "/help")
-                {
-                    answer = Help(message.Chat);
-                }
-                else if (messageText == "Отмена")
-                {
-                    app.Cancel(message.Chat.Id);
-                    answer = "Главное меню";
-                }
-                else if (messageText.ToLower().Contains("мои растения"))
-                {
-                    var plants = app.GetPlantsByUser(new Infrastructure.User(message.Chat.Id, message.Chat.FirstName));
-                    if (plants.Length == 0)
-                    {
-                        answer = "У тебя пока не записано растений!";
-                    }
-                    else
-                    {
-                        answer = plants;
-                    }
-                }
-                else if (messageText.ToLower().Contains("добавить"))
-                {
-                    app.ChangeUserStatus(message.Chat.Id, UserStatus.SendPlantName);
-                    answer = "Как назовём твоё растение?";
-                }
-                else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantName)
-                {
-                    if (app.SetNewPlantName(message.Chat.Id, messageText))
-                    {
-                        answer = "У тебя уже есть растение с таким именем! Придумай другое.";
-                    }
-                    else
-                    {
-                        answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
-                                 "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
-                    }
-                }
-                else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantWateringInterval)
-                {
-                    answer = "Пожалуйста, введи целое положительное число";
-                    try
-                    {
-                        if (int.TryParse(messageText, out var interval))
-                        {
-                            app.AddNewPlantFromActivePlantWithWateringInterval(message.Chat.Id, interval);
-                            answer = "Поздравляем, твоё растение добавлено!";
-                        }
-                    }
-                    catch (ArgumentException)
-                    {
-                    }
-                }
+                answer = executor.ExecuteCommand(message);
 
                 if (app.GetUserStatus(message.Chat.Id) == UserStatus.DefaultStatus)
                 {
@@ -119,24 +78,6 @@ namespace UserInterface
 
                 SendAnswer(message.Chat, answer, keyboard);
             }
-        }
-
-        private static string GreetAtStart(Chat chat)
-        {
-            var user = new Infrastructure.User(chat.Id, chat.FirstName);
-            if (app.AddUser(user))
-            {
-                return $"Привет, {chat.FirstName}!\n" +
-                    $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
-                    $"Введи /help для справки.";
-            }
-
-            return $"Снова здравствуй, {chat.FirstName}! Если нужна справка - введи /help";
-        }
-
-        private static string Help(Chat chat)
-        {
-            return "Здесь должна быть справка, но её пока нет";
         }
 
         private static void SendAnswer(Chat chat, string answer, IReplyMarkup rm)
