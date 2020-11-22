@@ -1,5 +1,6 @@
 ﻿namespace UserInterface
 {
+    using System;
     using System.Collections.Generic;
     using Application;
     using Infrastructure;
@@ -65,22 +66,21 @@
             var userInput = message.Text;
             var status = this.app.GetUserStatus(message.Chat.Id);
             string answer = null;
-            var executed = false;
             foreach (var commandName in commandNames)
             {
-                if (this.CommandsByStatus[status].Contains(commandName))
+                if (userInput.ToLower().Contains(commandName))
                 {
-                    if (userInput.ToLower().Contains(commandName))
+                    if (commandName.Contains("/"))
                     {
+                        this.app.ChangeUserStatus(message.Chat.Id, UserStatus.DefaultStatus);
                         answer = this.Commands[commandName].Execute(message, this.app);
-                        executed = true;
                         break;
                     }
-                }
-
-                if (executed)
-                {
-                    break;
+                    else if (this.CommandsByStatus[status].Contains(commandName))
+                    {
+                        answer = this.Commands[commandName].Execute(message, this.app);
+                        break;
+                    }
                 }
             }
 
