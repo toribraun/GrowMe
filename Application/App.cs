@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Infrastructure;
 
@@ -63,10 +62,22 @@ namespace Application
             if (database.GetPlantsByUser(database.GetUserById(userId)).Any(
                 plant => plant.Name.Equals(plantName, StringComparison.OrdinalIgnoreCase)))
             {
-                return true;
+                return false;
             }
             database.UpdateUser(new User(userId) {Status = UserStatus.SendPlantWateringInterval, ActivePlantName = plantName});
-            return false;
+            return true;
+        }
+
+        public bool DeletePlant(long userId, string plantName)
+        {
+            if (!database.GetPlantsByUser(database.GetUserById(userId)).Any(
+                plant => plant.Name.Equals(plantName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+            database.DeletePlant(new Plant(plantName, userId));
+            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            return true;
         }
         
         public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
