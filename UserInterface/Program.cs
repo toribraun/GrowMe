@@ -19,7 +19,8 @@ namespace UserInterface
             new[]
         {
             new KeyboardButton("Мои растения"),
-            new KeyboardButton("Добавить растение")
+            new KeyboardButton("Добавить растение"),
+            new KeyboardButton("Удалить растение")
         }, true);
 
         private static IReplyMarkup cancelKeyboard = new ReplyKeyboardMarkup(
@@ -41,7 +42,7 @@ namespace UserInterface
         {
             var message = messageEventArgs.Message;
             var answer = "Я пока не знаю, что с этим делать.";
-            ReplyKeyboardMarkup keyboard;
+            ReplyKeyboardMarkup keyboard = null;
             if (message?.Type == MessageType.Text)
             {
                 var messageText = message.Text;
@@ -70,6 +71,36 @@ namespace UserInterface
                         answer = plants;
                     }
                 }
+                else if (messageText.ToLower().Contains("удалить"))
+                {
+                    var plants = app
+                        .GetPlantsByUser(new Infrastructure.User(message.Chat.Id, message.Chat.FirstName))
+                        .Split("\n");
+                    if (plants[0] == string.Empty)
+                    {
+                        answer = "У тебя пока не записано растений!";
+                    }
+                    else
+                    {
+                        app.ChangeUserStatus(message.Chat.Id, UserStatus.DeletePlantByName);
+                        answer = "Какое растение нужно удалить?";
+                        keyboard = GetUserPlantsKeyboard(plants);
+                    }
+                }
+                else if (app.GetUserStatus(message.Chat.Id) == UserStatus.DeletePlantByName)
+                {
+                    if (app.DeletePlant(message.Chat.Id, messageText))
+                    {
+                        answer = $"Растение {messageText} удалено!";
+                    }
+                    else
+                    {
+                        answer = "У тебя нет растения с таким именем!";
+                        keyboard = GetUserPlantsKeyboard(app
+                            .GetPlantsByUser(new Infrastructure.User(message.Chat.Id, message.Chat.FirstName))
+                            .Split("\n"));
+                    }
+                }
                 else if (messageText.ToLower().Contains("добавить"))
                 {
                     app.ChangeUserStatus(message.Chat.Id, UserStatus.SendPlantName);
@@ -79,12 +110,12 @@ namespace UserInterface
                 {
                     if (app.SetNewPlantName(message.Chat.Id, messageText))
                     {
-                        answer = "У тебя уже есть растение с таким именем! Придумай другое.";
+                        answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
+                                 "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
                     }
                     else
                     {
-                        answer = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
-                                 "Например, если твоё растение нужно поливать каждые три дня, отправь 3.";
+                        answer = "У тебя уже есть растение с таким именем! Придумай другое.";
                     }
                 }
                 else if (app.GetUserStatus(message.Chat.Id) == UserStatus.SendPlantWateringInterval)
@@ -103,22 +134,36 @@ namespace UserInterface
                     }
                 }
 
-                if (app.GetUserStatus(message.Chat.Id) == UserStatus.DefaultStatus)
+                if (keyboard == null)
                 {
-                    keyboard = (ReplyKeyboardMarkup)mainMenuKeyboard;
-                }
-                else
-                {
-                    keyboard = (ReplyKeyboardMarkup)cancelKeyboard;
+                    if (app.GetUserStatus(message.Chat.Id) == UserStatus.DefaultStatus)
+                    {
+                        keyboard = (ReplyKeyboardMarkup)mainMenuKeyboard;
+                    }
+                    else
+                    {
+                        keyboard = (ReplyKeyboardMarkup)cancelKeyboard;
+                    }
                 }
 
-                if (keyboard != null)
-                {
-                    keyboard.OneTimeKeyboard = true;
-                }
+                keyboard.OneTimeKeyboard = true;
 
                 SendAnswer(message.Chat, answer, keyboard);
             }
+        }
+
+        private static ReplyKeyboardMarkup GetUserPlantsKeyboard(string[] plants)
+        {
+            ReplyKeyboardMarkup keyboard;
+            var buttons = new KeyboardButton[plants.Length + 1];
+            for (var i = 0; i < buttons.Length - 1; i++)
+            {
+                buttons[i] = new KeyboardButton(plants[i]);
+            }
+
+            buttons[^1] = "Отмена";
+            keyboard = new ReplyKeyboardMarkup(buttons, true);
+            return keyboard;
         }
 
         private static string GreetAtStart(Chat chat)

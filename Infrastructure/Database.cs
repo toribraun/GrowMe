@@ -18,6 +18,7 @@ namespace Infrastructure
         User GetUserById(long id);
         void UpdateUser(User currentUser);
         void UpdatePlant(Plant currentPlant);
+        void DeletePlant(Plant currentPlant);
     }
 
     public enum UserStatus
@@ -26,6 +27,7 @@ namespace Infrastructure
         SendUserName,
         SendPlantName,
         SendPlantWateringInterval,
+        DeletePlantByName
     }
 
     public class User
@@ -90,8 +92,16 @@ namespace Infrastructure
         public bool WateringStatus { get; set; }
         [Name("addingDate")]
         public DateTime AddingDate { get; set; }
+        [Name("shouldBeDeleted")]
+        public bool ShouldBeDeleted { get; set; }
         
         public Plant() {}
+
+        public Plant(string name, long userId)
+        {
+            Name = name;
+            UserId = userId;
+        }
 
         public Plant(string name, long userId, int wateringInterval)
         {
@@ -108,7 +118,7 @@ namespace Infrastructure
                 return false;
             if (obj.GetType() != GetType())
                 return false;
-            return Name == ((Plant)obj).Name && UserId == ((Plant)obj).UserId && AddingDate == ((Plant)obj).AddingDate;
+            return Name == ((Plant) obj).Name && UserId == ((Plant) obj).UserId;
         }
 
         public override int GetHashCode()
@@ -171,13 +181,22 @@ namespace Infrastructure
             {
                 if (!plants[i].Equals(currentPlant)) 
                     continue;
-                plants[i] = currentPlant;
+                if (currentPlant.ShouldBeDeleted is true)
+                    plants.RemoveAt(i);
+                else
+                    plants[i] = currentPlant;
                 break;
             }
             using var streamWriter = new StreamWriter(plantsPath);
             using var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
             csvWriter.Configuration.Delimiter = ";";
             csvWriter.WriteRecords(plants);
+        }
+
+        public void DeletePlant(Plant currentPlant)
+        {
+            currentPlant.ShouldBeDeleted = true;
+            UpdatePlant(currentPlant);
         }
 
         public void AddUser(User user)
