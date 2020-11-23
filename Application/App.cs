@@ -18,7 +18,7 @@ namespace Application
             database = new CsvDatabase(
                 "users.csv", "users_plants.csv", "common_plants.csv");
             var tm = new TimerCallback(SendNotifications);
-            timer = new Timer(tm, new object(), 0, 5000);
+            timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
         }
 
         public void SendNotifications(object obj)
