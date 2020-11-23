@@ -2,7 +2,7 @@
 {
     using System;
     using Application;
-    using Infrastructure;
+    using Domain;
     using Telegram.Bot;
     using Telegram.Bot.Args;
     using Telegram.Bot.Types;

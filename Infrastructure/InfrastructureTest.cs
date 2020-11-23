@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Domain;
 using NUnit.Framework;
 
 namespace Infrastructure
@@ -16,12 +17,13 @@ namespace Infrastructure
         {
             using (var fsUsers = new FileStream("test_users.csv", FileMode.Create))
             {
-                var array = System.Text.Encoding.Default.GetBytes("id;name;status;activePlantName\n");
+                var array = System.Text.Encoding.Default.GetBytes("Id;Name;Status;ActivePlantName\n");
                 fsUsers.Write(array, 0, array.Length);
             }
             using (var fsPlants = new FileStream("test_users_plants.csv", FileMode.Create))
             {
-                var array = System.Text.Encoding.Default.GetBytes("name;userId;wateringInterval;nextWateringTime;wateringStatus;addingDate\n");
+                var array = System.Text.Encoding.Default.GetBytes(
+                    "Name;UserId;WateringInterval;NextWateringTime;WateringStatus;AddingDate;ShouldBeDeleted\n");
                 fsPlants.Write(array, 0, array.Length);
             }
 

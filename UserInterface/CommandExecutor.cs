@@ -1,4 +1,6 @@
-﻿namespace UserInterface
+﻿using Domain;
+
+namespace UserInterface
 {
     using System;
     using System.Collections.Generic;

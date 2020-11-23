@@ -1,4 +1,6 @@
-﻿namespace UserInterface.Commands
+﻿using Domain;
+
+namespace UserInterface.Commands
 {
     using System;
     using Application;

@@ -1,4 +1,6 @@
-﻿namespace UserInterface.Commands
+﻿using Domain;
+
+namespace UserInterface.Commands
 {
     using Application;
     using Infrastructure;
@@ -18,7 +20,7 @@
         public string Execute(Message message, App app)
         {
             var plants = app
-                .GetPlantsByUser(new Infrastructure.User(message.Chat.Id, message.Chat.FirstName))
+                .GetPlantsByUser(new Domain.User(message.Chat.Id, message.Chat.FirstName))
                 .Split("\n");
             if (plants[0] == string.Empty)
             {

@@ -17,7 +17,7 @@
         public string Execute(Message message, App app)
         {
             var chat = message.Chat;
-            var user = new Infrastructure.User(chat.Id, chat.FirstName);
+            var user = new Domain.User(chat.Id, chat.FirstName);
             if (app.AddUser(user))
             {
                 return $"Привет, {chat.FirstName}!\n" +
