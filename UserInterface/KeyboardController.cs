@@ -7,7 +7,7 @@ namespace UserInterface
     using Telegram.Bot.Types;
     using Telegram.Bot.Types.ReplyMarkups;
 
-    internal class KeyboardController
+    public class KeyboardController
     {
         private App app;
 

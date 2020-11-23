@@ -51,5 +51,10 @@ namespace Domain
         {
             return (UserId + Name + AddingDate).GetHashCode();
         }
+
+        public void UpdateNextWateringTime()
+        {
+            NextWateringTime = DateTime.Now.AddDays(wateringInterval);
+        }
     }
 }

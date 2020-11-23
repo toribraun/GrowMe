@@ -8,6 +8,7 @@ namespace Infrastructure
         void AddUser(User user);
         void AddPlant(Plant plant);
         IEnumerable<User> GetUsers();
+        IEnumerable<Plant> GetPlants();
         IEnumerable<Plant> GetPlantsByUser(User user);
         User GetUserById(long id);
         void UpdateUser(User currentUser);

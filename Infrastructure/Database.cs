@@ -1,11 +1,9 @@
 #nullable enable
-using System;
 using CsvHelper;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using CsvHelper.Configuration.Attributes;
 using Domain;
 
 namespace Infrastructure

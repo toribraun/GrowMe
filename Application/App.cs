@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Domain;
 using Infrastructure;
 
@@ -8,11 +10,37 @@ namespace Application
     public class App
     {
         private IDataBase database;
+        private Timer timer;
+        public event Action<long, string> SendNotification;
 
         public App()
         {
             database = new CsvDatabase(
                 "users.csv", "users_plants.csv", "common_plants.csv");
+            var tm = new TimerCallback(SendNotifications);
+            timer = new Timer(tm, new object(), 0, 5000);
+        }
+
+        public void SendNotifications(object obj)
+        {
+            foreach (var plant in GetPlantsToSendNotifications())
+            {
+                SendNotification?.Invoke(plant.UserId, plant.Name);
+                Console.WriteLine($"userId {plant.UserId}, {plant.Name}");
+            }
+        }
+
+        private IEnumerable<Plant> GetPlantsToSendNotifications()
+        {
+            var now = DateTime.Now;
+            return database.GetPlants()
+                .Where(plant => plant.NextWateringTime <= now)
+                .Select(plant =>
+                {
+                    plant.UpdateNextWateringTime();
+                    database.UpdatePlant(plant);
+                    return plant;
+                });
         }
         
         public bool AddUser(User user)
