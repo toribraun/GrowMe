@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Domain;
@@ -9,51 +8,39 @@ namespace Application
 {
     public class App
     {
-        private IDataBase database;
+        private IUserRepository userRepository;
+        private IPlantRepository plantRepository;
         private Timer timer;
         public event Action<long, string> SendNotification;
 
         public App()
         {
-            database = new CsvDatabase(
-                "users.csv", "users_plants.csv", "common_plants.csv");
+            userRepository = new UserRepository(new DatabaseCsvTable<User>("users.csv"));
+            plantRepository = new PlantRepository(new DatabaseCsvTable<Plant>("users_plants.csv"));
             var tm = new TimerCallback(SendNotifications);
             timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
         }
 
         public void SendNotifications(object obj)
         {
-            foreach (var plant in GetPlantsToSendNotifications())
+            foreach (var plant in plantRepository.GetPlantsToWater())
             {
                 SendNotification?.Invoke(plant.UserId, plant.Name);
                 Console.WriteLine($"userId {plant.UserId}, {plant.Name}");
             }
         }
-
-        private IEnumerable<Plant> GetPlantsToSendNotifications()
-        {
-            var now = DateTime.Now;
-            return database.GetPlants()
-                .Where(plant => plant.NextWateringTime <= now)
-                .Select(plant =>
-                {
-                    plant.UpdateNextWateringTime();
-                    database.UpdatePlant(plant);
-                    return plant;
-                });
-        }
         
         public bool AddUser(User user)
         {
-            if (database.GetUsers().Contains(user))
+            if (userRepository.GetUser(user.Id) == null)
                 return false;
-            database.AddUser(user);
+            userRepository.AddNewUser(user);
             return true;
         }
 
         public bool UserExists(long userId)
         {
-            var user = database.GetUserById(userId);
+            var user = userRepository.GetUser(userId);
             try
             {
                 var id = user.Id;
@@ -67,57 +54,61 @@ namespace Application
 
         public User GetUserById(long userId)
         {
-            return database.GetUserById(userId);
+            return userRepository.GetUser(userId);
         }
 
         public string GetPlantsByUser(User user)
         {
-            return database.GetPlantsByUser(user)
+            return plantRepository.GetPlantsByUser(user.Id)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
         }
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
         {
-            database.UpdateUser(new User(userId) {Status = newStatus});
+            userRepository.UpdateUser(new User(userId) {Status = newStatus});
         }
 
         public UserStatus GetUserStatus(long userId)
         {
-            return database.GetUserById(userId).Status;
+            return userRepository.GetUser(userId).Status;
         }
 
         public bool SetNewPlantName(long userId, string plantName)
         {
-            if (database.GetPlantsByUser(database.GetUserById(userId)).Any(
+            if (plantRepository.GetPlantsByUser(userRepository.GetUser(userId).Id).Any(
                 plant => plant.Name.Equals(plantName, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
             }
-            database.UpdateUser(new User(userId) {Status = UserStatus.SendPlantWateringInterval, ActivePlantName = plantName});
+            userRepository.UpdateUser(new User(userId)
+            {
+                Status = UserStatus.SendPlantWateringInterval, 
+                ActivePlantName = plantName
+            });
             return true;
         }
 
         public bool DeletePlant(long userId, string plantName)
         {
-            if (!database.GetPlantsByUser(database.GetUserById(userId)).Any(
+            if (!plantRepository.GetPlantsByUser(userRepository.GetUser(userId).Id).Any(
                 plant => plant.Name.Equals(plantName, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
             }
-            database.DeletePlant(new Plant(plantName, userId));
-            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            plantRepository.DeletePlant(new Plant(plantName, userId));
+            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
             return true;
         }
         
         public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
         {
-            database.AddPlant(new Plant(database.GetUserById(userId).ActivePlantName, userId, wateringInterval));
-            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            plantRepository.AddNewPlant(new Plant(userRepository.GetUser(userId).ActivePlantName, userId, wateringInterval));
+            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
         }
 
         public void Cancel(long userId)
         {
-            database.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
         }
     }
 }
