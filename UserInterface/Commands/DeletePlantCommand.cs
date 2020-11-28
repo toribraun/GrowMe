@@ -1,9 +1,7 @@
-﻿using Domain;
-
-namespace UserInterface.Commands
+﻿namespace UserInterface.Commands
 {
     using Application;
-    using Infrastructure;
+    using Domain;
     using Telegram.Bot.Types;
 
     internal class DeletePlantCommand : IUserCommand

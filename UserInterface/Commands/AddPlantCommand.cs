@@ -3,7 +3,6 @@
 namespace UserInterface.Commands
 {
     using Application;
-    using Infrastructure;
     using Telegram.Bot.Types;
 
     internal class AddPlantCommand : IUserCommand

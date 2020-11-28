@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Domain;
 using NUnit.Framework;
 
 namespace Infrastructure
@@ -16,8 +15,8 @@ namespace Infrastructure
         [SetUp]
         public void SetUp()
         {
-            var userTable = new DatabaseCsvTable<User>("test_users.csv");
-            var plantTable = new DatabaseCsvTable<Plant>("test_users_plants.csv");
+            var userTable = new DatabaseCsvTable<UserRecord>("test_users.csv");
+            var plantTable = new DatabaseCsvTable<PlantRecord>("test_users_plants.csv");
             using (var fsUsers = new FileStream("test_users.csv", FileMode.Create))
             {
                 var array = System.Text.Encoding.Default.GetBytes(userTable.Header + "\n");
@@ -42,10 +41,10 @@ namespace Infrastructure
         [Test]
         public void AddAndGetUsers()
         {
-            var usersNew = new List<User>
+            var usersNew = new List<UserRecord>
             {
-                new User(1, "Alice"),
-                new User(2, "Bob")
+                new UserRecord(1, "Alice"),
+                new UserRecord(2, "Bob")
             };
             foreach (var user in usersNew)
             {
@@ -58,21 +57,21 @@ namespace Infrastructure
         [Test]
         public void UpdateAndGetUserStatus()
         {
-            var newUser = new User(33, "Eva") {Status = UserStatus.SendUserName};
+            var newUser = new UserRecord(33, "Eva") {Status = UserStatusRecord.SendUserName};
             userRepository.AddNewUser(newUser);
             userRepository.UpdateUser(newUser);
             //var addedUser = csvDB.GetUsers().First(u => u.Id == 33);
-            Assert.AreEqual(UserStatus.SendUserName, userRepository.GetUser(newUser.Id).Status);
+            Assert.AreEqual(UserStatusRecord.SendUserName, userRepository.GetUser(newUser.Id).Status);
         }
         
         [Test]
         public void AddAndGetPlantsByUsers()
         {
-            var plantsNew = new List<Plant>()
+            var plantsNew = new List<PlantRecord>()
             {
-                new Plant {Name = "tulpan", UserId = 1, WateringInterval = 3, AddingDate = DateTime.Parse("11.11.2020"), 
+                new PlantRecord {Name = "tulpan", UserId = 1, WateringInterval = 3, AddingDate = DateTime.Parse("11.11.2020"), 
                     NextWateringTime = DateTime.Parse("11.11.2020 11:00:00"), WateringStatus = false},
-                new Plant {Name = "cactus", UserId = 2, WateringInterval = 7, AddingDate = DateTime.Parse("11.11.2020"), 
+                new PlantRecord {Name = "cactus", UserId = 2, WateringInterval = 7, AddingDate = DateTime.Parse("11.11.2020"), 
                     NextWateringTime = DateTime.Parse("11.11.2020 11:00:00"), WateringStatus = false}
             };
             foreach (var plant in plantsNew)

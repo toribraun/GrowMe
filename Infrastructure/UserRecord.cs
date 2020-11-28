@@ -1,22 +1,28 @@
-namespace Domain
+namespace Infrastructure
 {
-    public class User
+    public interface IUserRecord
     {
-        public long Id { get; }
+        
+    }
+    
+    public class UserRecord
+    {
+        public long Id { get; set; }
         public string Name { get; set; }
-        public UserStatus Status { get; set; }
+        public UserStatusRecord Status { get; set; }
         public string ActivePlantName { get; set; }
         
-        public User(long id)
+        public UserRecord() {}
+        public UserRecord(long id)
         {
             Id = id;
         }
 
-        public User(long id, string name)
+        public UserRecord(long id, string name)
         {
             Id = id;
             Name = name;
-            Status = UserStatus.DefaultStatus;
+            Status = UserStatusRecord.DefaultStatus;
         }
 
         public override bool Equals(object? obj)
@@ -25,7 +31,7 @@ namespace Domain
                 return false;
             if (obj.GetType() != GetType())
                 return false;
-            return Id == ((User)obj).Id;
+            return Id == ((UserRecord)obj).Id;
         }
 
         public override int GetHashCode()
@@ -34,7 +40,7 @@ namespace Domain
         }
     }
     
-    public enum UserStatus
+    public enum UserStatusRecord
     {
         DefaultStatus,
         SendUserName,

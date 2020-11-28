@@ -15,8 +15,8 @@ namespace Application
 
         public App()
         {
-            userRepository = new UserRepository(new DatabaseCsvTable<User>("users.csv"));
-            plantRepository = new PlantRepository(new DatabaseCsvTable<Plant>("users_plants.csv"));
+            userRepository = new UserRepository(new DatabaseCsvTable<UserRecord>("users.csv"));
+            plantRepository = new PlantRepository(new DatabaseCsvTable<PlantRecord>("users_plants.csv"));
             var tm = new TimerCallback(SendNotifications);
             timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
         }
@@ -30,31 +30,42 @@ namespace Application
             }
         }
         
-        public bool AddUser(User user)
+        private User UserRecordToUser(UserRecord userRecord) => new User(
+            userRecord.Id, 
+            userRecord.Name) 
+            {Status = (UserStatus)(int)userRecord.Status, ActivePlantName = userRecord.ActivePlantName};
+        
+        private PlantRecord PlantToPlantRecord(Plant plant) => new PlantRecord(
+            plant.Name, 
+            plant.UserId, 
+            plant.WateringInterval)
         {
-            if (userRepository.GetUser(user.Id) == null)
+            NextWateringTime = plant.NextWateringTime,
+            WateringStatus = plant.WateringStatus,
+            AddingDate = plant.AddingDate,
+            ShouldBeDeleted = plant.ShouldBeDeleted
+        };
+        
+        public bool AddUser(long userId, string userName)
+        {
+            if (userRepository.GetUser(userId) != null)
                 return false;
-            userRepository.AddNewUser(user);
+            userRepository.AddNewUser(new UserRecord(userId, userName));
             return true;
         }
 
         public bool UserExists(long userId)
         {
-            var user = userRepository.GetUser(userId);
-            try
-            {
-                var id = user.Id;
-                return true;
-            }
-            catch (NullReferenceException)
-            {
+            if (userRepository.GetUser(userId) == null)
                 return false;
-            }
+            Console.WriteLine(userId);
+            return true;
         }
 
         public User GetUserById(long userId)
         {
-            return userRepository.GetUser(userId);
+            var userRecord = userRepository.GetUser(userId);
+            return new User(userRecord.Id, userRecord.Name);
         }
 
         public string GetPlantsByUser(User user)
@@ -65,12 +76,12 @@ namespace Application
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
         {
-            userRepository.UpdateUser(new User(userId) {Status = newStatus});
+            userRepository.UpdateUser(new UserRecord(userId) {Status = (UserStatusRecord)(int)newStatus});
         }
 
         public UserStatus GetUserStatus(long userId)
         {
-            return userRepository.GetUser(userId).Status;
+            return UserRecordToUser(userRepository.GetUser(userId)).Status;
         }
 
         public bool SetNewPlantName(long userId, string plantName)
@@ -80,9 +91,9 @@ namespace Application
             {
                 return false;
             }
-            userRepository.UpdateUser(new User(userId)
+            userRepository.UpdateUser(new UserRecord(userId)
             {
-                Status = UserStatus.SendPlantWateringInterval, 
+                Status = UserStatusRecord.SendPlantWateringInterval, 
                 ActivePlantName = plantName
             });
             return true;
@@ -95,20 +106,20 @@ namespace Application
             {
                 return false;
             }
-            plantRepository.DeletePlant(new Plant(plantName, userId));
-            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            plantRepository.DeletePlant(PlantToPlantRecord(new Plant(plantName, userId)));
+            userRepository.UpdateUser(new UserRecord(userId) {Status = UserStatusRecord.DefaultStatus});
             return true;
         }
         
         public void AddNewPlantFromActivePlantWithWateringInterval(long userId, int wateringInterval)
         {
-            plantRepository.AddNewPlant(new Plant(userRepository.GetUser(userId).ActivePlantName, userId, wateringInterval));
-            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            plantRepository.AddNewPlant(PlantToPlantRecord(new Plant(userRepository.GetUser(userId).ActivePlantName, userId, wateringInterval)));
+            userRepository.UpdateUser(new UserRecord(userId) {Status = UserStatusRecord.DefaultStatus});
         }
 
         public void Cancel(long userId)
         {
-            userRepository.UpdateUser(new User(userId) {Status = UserStatus.DefaultStatus});
+            userRepository.UpdateUser(new UserRecord(userId) {Status = UserStatusRecord.DefaultStatus});
         }
     }
 }

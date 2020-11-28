@@ -3,7 +3,6 @@
 namespace UserInterface
 {
     using System.Collections.Generic;
-    using Infrastructure;
     using Telegram.Bot.Types;
 
     public interface ICommandExecutor

@@ -1,11 +1,9 @@
-﻿using Domain;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
     using System;
     using System.Collections.Generic;
     using Application;
-    using Infrastructure;
+    using Domain;
     using Telegram.Bot.Types;
 
     public class CommandExecutor : ICommandExecutor
@@ -74,7 +72,7 @@ namespace UserInterface
                 {
                     if (commandName.Contains("/"))
                     {
-                        this.app.ChangeUserStatus(message.Chat.Id, UserStatus.DefaultStatus);
+                        this.app.Cancel(message.Chat.Id);
                         answer = this.Commands[commandName].Execute(message, this.app);
                         break;
                     }

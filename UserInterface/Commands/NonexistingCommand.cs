@@ -1,10 +1,8 @@
-﻿using Domain;
-
-namespace UserInterface.Commands
+﻿namespace UserInterface.Commands
 {
     using System;
     using Application;
-    using Infrastructure;
+    using Domain;
     using Telegram.Bot.Types;
 
     internal class NonexistingCommand : IUserCommand

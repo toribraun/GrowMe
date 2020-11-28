@@ -1,4 +1,6 @@
-﻿namespace UserInterface.Commands
+﻿using System;
+
+namespace UserInterface.Commands
 {
     using Application;
     using Telegram.Bot.Types;
@@ -17,9 +19,9 @@
         public string Execute(Message message, App app)
         {
             var chat = message.Chat;
-            var user = new Domain.User(chat.Id, chat.FirstName);
-            if (app.AddUser(user))
+            if (app.AddUser(chat.Id, chat.FirstName))
             {
+                Console.WriteLine('a');
                 return $"Привет, {chat.FirstName}!\n" +
                     $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
                     $"Введи /help для справки.";

@@ -3,7 +3,6 @@
 namespace UserInterface
 {
     using Application;
-    using Infrastructure;
     using Telegram.Bot.Types;
     using Telegram.Bot.Types.ReplyMarkups;
 

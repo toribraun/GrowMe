@@ -10,19 +10,19 @@ namespace Infrastructure
 {
     public interface IUserRepository
     {
-        User GetUser(long userId);
-        void UpdateUser(User newUser);
-        void AddNewUser(User newUser);
+        UserRecord GetUser(long userId);
+        void UpdateUser(UserRecord newUser);
+        void AddNewUser(UserRecord newUser);
     }
     
     public interface IPlantRepository
     {
-        IEnumerable<Plant> GetPlantsByUser(long userId);
+        IEnumerable<PlantRecord> GetPlantsByUser(long userId);
         
-        void UpdatePlant(Plant currentPlant);
-        void DeletePlant(Plant currentPlant);
-        IEnumerable<Plant> GetPlantsToWater();
-        void AddNewPlant(Plant newPlant);
+        void UpdatePlant(PlantRecord currentPlant);
+        void DeletePlant(PlantRecord currentPlant);
+        IEnumerable<PlantRecord> GetPlantsToWater();
+        void AddNewPlant(PlantRecord newPlant);
     }
 
     public interface IDatabaseTable<T>
@@ -74,21 +74,20 @@ namespace Infrastructure
 
     public class UserRepository : IUserRepository
     {
-        private readonly IDatabaseTable<User> userTable;
+        private readonly IDatabaseTable<UserRecord> userTable;
 
-        public UserRepository(IDatabaseTable<User> userTable)
+        public UserRepository(IDatabaseTable<UserRecord> userTable)
         {
             this.userTable = userTable;
         }
         
-        public User GetUser(long userId)
+        public UserRecord GetUser(long userId)
         {
             return userTable.GetAllData()
-                //.Select(a => new User(long.Parse(a[0]), a[1]))
                 .FirstOrDefault(u => u.Id == userId);
         }
 
-        public void UpdateUser(User newUser)
+        public void UpdateUser(UserRecord newUser)
         {
             var users = userTable.GetAllData().ToList();
             for (var i = 0; i < users.Count; i++)
@@ -102,7 +101,7 @@ namespace Infrastructure
             userTable.WriteAllData(users);
         }
 
-        public void AddNewUser(User user)
+        public void AddNewUser(UserRecord user)
         {
             userTable.AddNewRecord(user);
         }
@@ -110,20 +109,20 @@ namespace Infrastructure
 
     public class PlantRepository : IPlantRepository
     {
-        private IDatabaseTable<Plant> plantTable;
+        private IDatabaseTable<PlantRecord> plantTable;
         
-        public PlantRepository(IDatabaseTable<Plant> plantTable)
+        public PlantRepository(IDatabaseTable<PlantRecord> plantTable)
         {
             this.plantTable = plantTable;
         }
-        public IEnumerable<Plant> GetPlantsByUser(long userId)
+        public IEnumerable<PlantRecord> GetPlantsByUser(long userId)
         {
             return plantTable.GetAllData()
                 .Where(plant => plant.UserId == userId)
                 .ToList();
         }
 
-        public void UpdatePlant(Plant currentPlant)
+        public void UpdatePlant(PlantRecord currentPlant)
         {
             var plants = plantTable.GetAllData().ToList();
             for (var i = 0; i < plants.Count; i++)
@@ -139,13 +138,13 @@ namespace Infrastructure
             plantTable.WriteAllData(plants);
         }
 
-        public void DeletePlant(Plant currentPlant)
+        public void DeletePlant(PlantRecord currentPlant)
         {
             currentPlant.ShouldBeDeleted = true;
             UpdatePlant(currentPlant);
         }
 
-        public IEnumerable<Plant> GetPlantsToWater()
+        public IEnumerable<PlantRecord> GetPlantsToWater()
         {
             var now = DateTime.Now;
             return plantTable.GetAllData()
@@ -158,7 +157,7 @@ namespace Infrastructure
                 });
         }
 
-        public void AddNewPlant(Plant newPlant)
+        public void AddNewPlant(PlantRecord newPlant)
         {
             plantTable.AddNewRecord(newPlant);
         }
