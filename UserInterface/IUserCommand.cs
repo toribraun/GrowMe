@@ -7,6 +7,6 @@
     {
         public string[] Names { get; }
 
-        public string Execute(Message message, App app);
+        public Answer Execute(Message message, App app);
     }
 }

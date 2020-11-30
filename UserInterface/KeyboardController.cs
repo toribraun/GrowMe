@@ -10,12 +10,12 @@ namespace UserInterface
     {
         private App app;
 
-        internal KeyboardController(App app)
+        public KeyboardController(App app)
         {
             this.app = app;
         }
 
-        internal IReplyMarkup GetMainMenuKeyboard()
+        private IReplyMarkup GetMainMenuKeyboard()
         {
             return new ReplyKeyboardMarkup(
             new[]
@@ -49,24 +49,22 @@ namespace UserInterface
             return keyboard;
         }
 
-        internal IReplyMarkup GetKeyboard(Message message)
+        internal IReplyMarkup GetKeyboard(Answer answer)
         {
-            var userStatus = this.app.GetUserStatus(message.Chat.Id);
-            var user = this.app.GetUserById(message.Chat.Id);
-            if (userStatus == UserStatus.DeletePlantByName)
+            var user = this.app.GetUserById(answer.UserId);
+            if (answer.Status == UserStatus.DeletePlantByName)
             {
                 return this.GetUserPlantsKeyboard(this.app
                         .GetPlantsByUser(user)
                         .Split("\n"));
             }
-            else if (userStatus == UserStatus.DefaultStatus)
+
+            if (answer.Status == UserStatus.DefaultStatus)
             {
                 return this.GetMainMenuKeyboard();
             }
-            else
-            {
-                return this.GetCancelKeyboard();
-            }
+
+            return this.GetCancelKeyboard();
         }
     }
 }

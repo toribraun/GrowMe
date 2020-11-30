@@ -16,25 +16,23 @@
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
             var status = app.GetUserStatus(message.Chat.Id);
             if (status == UserStatus.SendPlantName)
             {
-                return this.NamePlant(message, app);
+                return new Answer(NamePlant(message, app), message.Chat.Id, UserStatus.SendPlantWateringInterval);
             }
             else if (status == UserStatus.SendPlantWateringInterval)
             {
-                return this.SetWateringInterval(message, app);
+                return new Answer(this.SetWateringInterval(message, app), message.Chat.Id);
             }
             else if (app.GetUserStatus(message.Chat.Id) == UserStatus.DeletePlantByName)
             {
-                return this.DeletePlant(message, app);
+                return new Answer(this.DeletePlant(message, app), message.Chat.Id);
             }
-            else
-            {
-                return "Я не понимаю тебя. Если нужна справка, введи /help!";
-            }
+
+            return new Answer("Я не понимаю тебя. Если нужна справка, введи /help!", message.Chat.Id);
         }
 
         private string DeletePlant(Message message, App app)

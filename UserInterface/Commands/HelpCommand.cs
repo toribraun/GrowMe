@@ -14,9 +14,11 @@
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
-            return "Если ты видишь это сообщение, и ты не один из моих создателей, можешь пнуть их, чтобы они сделали наконец справку:D";
+            return new Answer(
+                "Если ты видишь это сообщение, и ты не один из моих создателей, можешь пнуть их, чтобы они сделали наконец справку:D",
+                message.Chat.Id);
         }
     }
 }

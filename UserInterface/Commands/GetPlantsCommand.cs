@@ -14,18 +14,16 @@
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
             var user = app.GetUserById(message.Chat.Id);
             var plants = app.GetPlantsByUser(user);
             if (plants.Length == 0)
             {
-                return "У тебя пока не записано растений!";
+                return new Answer("У тебя пока не записано растений!", message.Chat.Id);
             }
-            else
-            {
-                return "Вот все твои растения, про которые мне известно:\n" + plants;
-            }
+
+            return new Answer("Вот все твои растения, про которые мне известно:\n" + plants, message.Chat.Id);
         }
     }
 }

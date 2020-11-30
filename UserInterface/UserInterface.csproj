@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Ninject" Version="4.0.0-beta-0134" />
       <PackageReference Include="OpenCVSharp" Version="2.4.0.1" />
       <PackageReference Include="Telegram.Bot" Version="15.7.1" />
       <PackageReference Include="TelegramBotClient" Version="1.0.0-pre-alpha-4" />

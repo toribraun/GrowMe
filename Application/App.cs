@@ -26,7 +26,6 @@ namespace Application
             foreach (var plant in plantRepository.GetPlantsToWater())
             {
                 SendNotification?.Invoke(plant.UserId, plant.Name);
-                Console.WriteLine($"userId {plant.UserId}, {plant.Name}");
             }
         }
         

@@ -14,10 +14,10 @@
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
             app.Cancel(message.Chat.Id);
-            return "Ну хорошо, ты снова в главном меню";
+            return new Answer("Ну хорошо, ты снова в главном меню", message.Chat.Id);
         }
     }
 }

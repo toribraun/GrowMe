@@ -55,7 +55,7 @@
             }
         }
 
-        public string ExecuteCommand(Message message)
+        public Answer ExecuteCommand(Message message)
         {
             if (!this.app.UserExists(message.Chat.Id))
             {
@@ -65,7 +65,7 @@
             var commandNames = this.Commands.Keys;
             var userInput = message.Text;
             var status = this.app.GetUserStatus(message.Chat.Id);
-            string answer = null;
+            Answer answer = null;
             foreach (var commandName in commandNames)
             {
                 if (userInput.ToLower().Contains(commandName))

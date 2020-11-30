@@ -15,19 +15,19 @@
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
             var plants = app
                 .GetPlantsByUser(new Domain.User(message.Chat.Id, message.Chat.FirstName))
                 .Split("\n");
             if (plants[0] == string.Empty)
             {
-                return "У тебя пока не записано растений!";
+                return new Answer("У тебя пока не записано растений!", message.Chat.Id);
             }
             else
             {
                 app.ChangeUserStatus(message.Chat.Id, UserStatus.DeletePlantByName);
-                return "Какое растение ты хочешь удалить?";
+                return new Answer("Какое растение ты хочешь удалить?", message.Chat.Id, UserStatus.DeletePlantByName);
             }
         }
     }

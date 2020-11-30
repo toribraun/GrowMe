@@ -16,18 +16,17 @@ namespace UserInterface.Commands
 
         public string[] Names => this.names;
 
-        public string Execute(Message message, App app)
+        public Answer Execute(Message message, App app)
         {
             var chat = message.Chat;
             if (app.AddUser(chat.Id, chat.FirstName))
             {
-                Console.WriteLine('a');
-                return $"Привет, {chat.FirstName}!\n" +
+                return new Answer($"Привет, {chat.FirstName}!\n" +
                     $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
-                    $"Введи /help для справки.";
+                    $"Введи /help для справки.", message.Chat.Id);
             }
 
-            return $"Снова здравствуй, {chat.FirstName}! Если нужна справка - введи /help";
+            return new Answer($"Снова здравствуй, {chat.FirstName}! Если нужна справка - введи /help", message.Chat.Id);
         }
     }
 }

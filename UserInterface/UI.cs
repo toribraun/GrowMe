@@ -17,12 +17,12 @@ namespace UserInterface
         private TelegramBotClient client;
         private string token;
 
-        public UI(App app, ICommandExecutor executor, KeyboardController keyboardController, string token)
+        public UI(App app, ICommandExecutor executor, KeyboardController keyboardController)
         {
             this.app = app;
             this.executor = executor;
             this.keyboardController = keyboardController;
-            this.token = token;
+            this.token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
         }
 
         public void Run()
@@ -56,13 +56,11 @@ namespace UserInterface
         private void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
-            var answer = "Я пока не знаю, что с этим делать!";
             if (message?.Type == MessageType.Text)
             {
-                answer = executor.ExecuteCommand(message);
-                var messageText = message.Text;
-                IReplyMarkup keyboard = keyboardController.GetKeyboard(message);
-                SendAnswer(message.Chat, answer, keyboard);
+                var answer = executor.ExecuteCommand(message);
+                var keyboard = keyboardController.GetKeyboard(answer);
+                SendAnswer(message.Chat, answer.AnswerText, keyboard);
             }
         }
 
