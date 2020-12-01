@@ -1,3 +1,5 @@
+using Application.Replies;
+
 namespace UserInterface
 {
     using System;
@@ -61,6 +63,14 @@ namespace UserInterface
                 var answer = executor.ExecuteCommand(message);
                 var keyboard = keyboardController.GetKeyboard(answer);
                 SendAnswer(message.Chat, answer.AnswerText, keyboard);
+            }
+        }
+
+        public void BuildMessageToUser(IReply reply)
+        {
+            if (reply.GetType() == typeof(ReplyOnGetPlants))
+            {
+                
             }
         }
 

@@ -62,7 +62,6 @@ namespace Application
         {
             if (userRepository.GetUser(userId) == null)
                 return false;
-            Console.WriteLine(userId);
             return true;
         }
 
@@ -72,11 +71,34 @@ namespace Application
             return new User(userRecord.Id, userRecord.Name);
         }
 
+        public void GetPlantsByUserEvent(long userId)
+        {
+            var plants = plantRepository.GetPlantsByUser(userId)
+                .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
+            OnReply.Invoke(new Reply() {Text = plants, Type = ReplyType.GetPlantsByUser});
+            
+        }
+        
         public string GetPlantsByUser(User user)
         {
             return plantRepository.GetPlantsByUser(user.Id)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
+            
         }
+
+        public class Reply : IReply
+        {
+            public long UserId { get; }
+            public string Text { get; set; }
+            public ReplyType Type { get; set; }
+        }
+
+        public enum ReplyType
+        {
+            GetPlantsByUser
+        }
+
+        public event Action<Reply> OnReply;
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
         {

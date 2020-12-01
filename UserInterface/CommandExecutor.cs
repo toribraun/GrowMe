@@ -10,7 +10,15 @@
     {
         private readonly Dictionary<string, IUserCommand> allCommands;
         private readonly Dictionary<UserStatus, List<string>> commandsByStatus;
+        private readonly Dictionary<string, Action<long>> commandsByEvents;
         private App app;
+
+        public event Action<long> OnGetPlants;
+        public event Action<long> OnAddPlant;
+        public event Action<long> OnDeletePlant;
+        public event Action<long> OnStart;
+        public event Action<long> OnCancel;
+        public event Action<long> OnNonexistingCommand;
 
         public CommandExecutor(App app)
         {
@@ -18,6 +26,13 @@
             this.commandsByStatus = new Dictionary<UserStatus, List<string>>();
             this.allCommands.Add("/notacommand", new Commands.NonexistingCommand());
             this.AddCommand(new Commands.StartCommand());
+
+            commandsByEvents = new Dictionary<string, Action<long>>()
+            {
+                {"Мои растения", id => OnGetPlants(id)}
+                // внутри app нужен экземпляр Executor, чтобы подписываться на события
+                // или можно попробовать вынести это в Program, но хз
+            };
             this.app = app;
         }
 
@@ -81,6 +96,8 @@
                         answer = this.Commands[commandName].Execute(message, this.app);
                         break;
                     }
+
+                    // commandsByEvents[commandName].Invoke(message.Chat.Id);
                 }
             }
 
