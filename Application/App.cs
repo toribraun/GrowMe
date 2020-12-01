@@ -13,10 +13,15 @@ namespace Application
         private Timer timer;
         public event Action<long, string> SendNotification;
 
-        public App()
+        public App(IUserRepository userRepository, IPlantRepository plantRepository)
         {
-            userRepository = new UserRepository(new DatabaseCsvTable<UserRecord>("users.csv"));
-            plantRepository = new PlantRepository(new DatabaseCsvTable<PlantRecord>("users_plants.csv"));
+            this.userRepository = userRepository;
+            this.plantRepository = plantRepository;
+            InitTimer();
+        }
+
+        private void InitTimer()
+        {
             var tm = new TimerCallback(SendNotifications);
             timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
         }
