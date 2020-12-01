@@ -20,8 +20,8 @@ namespace Infrastructure
 
         public IEnumerable<T> GetAllData()
         {
-            using var stream = File.Open(path, FileMode.Open);
-            using var reader = new StreamReader(stream);
+            //using var stream = File.Open(path, FileMode.Open);
+            using var reader = new StreamReader(path);
             using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
             csvReader.Configuration.Delimiter = ";";
             return csvReader.GetRecords<T>().ToList();
