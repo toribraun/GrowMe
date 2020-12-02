@@ -1,4 +1,7 @@
-﻿namespace UserInterface
+﻿using System.ComponentModel.Design;
+using System.Linq;
+
+namespace UserInterface
 {
     using System;
     using System.Collections.Generic;
@@ -15,10 +18,11 @@
 
         public event Action<long> OnGetPlants;
         public event Action<long> OnAddPlant;
-        public event Action<long> OnDeletePlant;
-        public event Action<long> OnStart;
+        public event Action<long> OnGetPlantsToDelete;
+        public event Action<long, string> OnStart;
         public event Action<long> OnCancel;
-        public event Action<long> OnNonexistingCommand;
+        public event Action<long, string> OnNonexistingCommand;
+        public event Action<long, string> OnCheckUserExist;
 
         public CommandExecutor(App app)
         {
@@ -26,12 +30,21 @@
             this.commandsByStatus = new Dictionary<UserStatus, List<string>>();
             this.allCommands.Add("/notacommand", new Commands.NonexistingCommand());
             this.AddCommand(new Commands.StartCommand());
+            OnStart += app.StartEvent;
+            OnCancel += app.Cancel;
+            OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
+            OnGetPlants += app.GetPlantsByUserEvent;
+            OnAddPlant += app.AddPlantByUserEvent;
+            OnNonexistingCommand += (id, message) => app.HandleNonexistingCommand(id, message);
+            OnCheckUserExist += (id, name) => app.CheckUserExistEvent(id, name);
 
             commandsByEvents = new Dictionary<string, Action<long>>()
             {
-                {"Мои растения", id => OnGetPlants(id)}
-                // внутри app нужен экземпляр Executor, чтобы подписываться на события
-                // или можно попробовать вынести это в Program, но хз
+                {"мои растения", OnGetPlants},
+                {"добавить", OnAddPlant},
+                {"удалить", OnGetPlantsToDelete},
+                {"отмена", OnCancel}
+                
             };
             this.app = app;
         }
@@ -76,7 +89,7 @@
             {
                 return this.Commands["/start"].Execute(message, this.app);
             }
-
+        
             var commandNames = this.Commands.Keys;
             var userInput = message.Text;
             var status = this.app.GetUserStatus(message.Chat.Id);
@@ -96,17 +109,39 @@
                         answer = this.Commands[commandName].Execute(message, this.app);
                         break;
                     }
-
+        
                     // commandsByEvents[commandName].Invoke(message.Chat.Id);
                 }
             }
-
+        
             if (answer == null)
             {
                 return this.Commands["/notacommand"].Execute(message, this.app);
             }
-
+        
             return answer;
+        }
+        
+        public void ExecuteCommandMessage(Message message)
+        {
+            var userId = message.Chat.Id;
+            var userName = message.Chat.Username;
+            var textMessage = message.Text;
+            OnCheckUserExist?.Invoke(userId, userName);
+
+            var commandNames = this.commandsByEvents.Keys;
+            var isEvent = false;
+            foreach (var commandName in commandNames.Where(commandName => textMessage.ToLower().Contains(commandName)))
+            {
+                commandsByEvents[commandName]?.Invoke(userId);
+                isEvent = true;
+                break;
+            }
+
+            if (!isEvent)
+            {
+                OnNonexistingCommand?.Invoke(userId, textMessage);
+            }
         }
     }
 }

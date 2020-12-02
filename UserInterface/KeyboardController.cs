@@ -15,7 +15,7 @@ namespace UserInterface
             this.app = app;
         }
 
-        private IReplyMarkup GetMainMenuKeyboard()
+        public IReplyMarkup GetMainMenuKeyboard()
         {
             return new ReplyKeyboardMarkup(
             new[]

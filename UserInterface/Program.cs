@@ -26,16 +26,16 @@ namespace UserInterface
             var app = container.Get<App>();
             var executor = container.Get<CommandExecutor>();
 
-            executor.OnGetPlants += id => app.GetPlantsByUserEvent(id);
-            app.OnReply += ui.BuildMessageToUser;
-            
-            
-            ui.Run();
-            
+            // executor.OnStart += app.StartEvent;
+            // executor.OnCancel += app.Cancel;
+            // executor.OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
+            // executor.OnGetPlants += app.GetPlantsByUserEvent;
+            // executor.OnAddPlant += app.AddPlantByUserEvent;
+            // executor.OnNonexistingCommand += (id, message) => app.HandleNonexistingCommand(id, message);
+            // executor.OnCheckUserExist += (id, name) => app.CheckUserExistEvent(id, name);
+            // app.OnReply += ui.BuildMessageToUser;
 
-            // app.OnReplyRequest = ui.SendMessage;
-            // addPlantCommand.OnAddPlantToUser += addPlantToUserHandler.AddPlantToUser;
-            // addPlantToUserHandler.Execute
+            ui.Run();
         }
     }
 }

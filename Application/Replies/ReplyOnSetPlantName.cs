@@ -1,10 +1,10 @@
 namespace Application.Replies
 {
-    public class ReplyOnCancel : IReply
+    public class ReplyOnSetPlantName : IReply
     {
         public long UserId { get; }
 
-        public ReplyOnCancel(long userId)
+        public ReplyOnSetPlantName(long userId)
         {
             UserId = userId;
         }

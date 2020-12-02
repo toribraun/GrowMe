@@ -1,10 +1,10 @@
 namespace Application.Replies
 {
-    public class ReplyOnCancel : IReply
+    public class ReplyOnSetWateringInterval : IReply
     {
         public long UserId { get; }
 
-        public ReplyOnCancel(long userId)
+        public ReplyOnSetWateringInterval(long userId)
         {
             UserId = userId;
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Application.Replies;
 using Domain;
 using Infrastructure;
 
@@ -12,6 +13,7 @@ namespace Application
         private IPlantRepository plantRepository;
         private Timer timer;
         public event Action<long, string> SendNotification;
+        public event Action<IReply> OnReply;
 
         public App(IUserRepository userRepository, IPlantRepository plantRepository)
         {
@@ -71,34 +73,67 @@ namespace Application
             return new User(userRecord.Id, userRecord.Name);
         }
 
-        public void GetPlantsByUserEvent(long userId)
+        public void HandleNonexistingCommand(long userId, string message)
         {
-            var plants = plantRepository.GetPlantsByUser(userId)
-                .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
-            OnReply.Invoke(new Reply() {Text = plants, Type = ReplyType.GetPlantsByUser});
-            
+            var status = GetUserStatus(userId);
+            if (status == UserStatus.SendPlantName)
+            {
+                // проверка
+                SetNewPlantName(userId, message);
+                OnReply?.Invoke(new ReplyOnSetPlantName(userId));
+            }
+            else if (status == UserStatus.SendPlantWateringInterval)
+            {
+                // проверка
+                int.TryParse(message, out var interval);
+                AddNewPlantFromActivePlantWithWateringInterval(userId, interval);
+                OnReply?.Invoke(new ReplyOnSetWateringInterval(userId));
+            }
+            else if (status == UserStatus.DeletePlantByName)
+            {
+                OnReply?.Invoke(new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
+            }
         }
         
+        public void CheckUserExistEvent(long userId, string userName)
+        {
+            var isAdded = AddUser(userId, userName);
+            if (isAdded)
+                OnReply?.Invoke(new ReplyOnStart(userId, userName, isAdded));
+        }
+        
+        public void StartEvent(long userId, string userName)
+        {
+            OnReply?.Invoke(new ReplyOnStart(userId, userName, AddUser(userId, userName)));
+        }
+
+        public void GetPlantsByUserEvent(long userId)
+        {
+            Console.WriteLine("a");
+            var plants = plantRepository.GetPlantsByUser(userId)
+                .Select(record => record.Name);
+            OnReply?.Invoke(new ReplyOnGetPlants(userId, plants));
+        }
+
+        public void GetPlantsToDeleteEvent(long userId)
+        {
+            var plants = plantRepository.GetPlantsByUser(userId)
+                .Select(record => record.Name);
+            OnReply?.Invoke(new ReplyOnGetPlantsToDelete(userId, plants));
+        }
+        
+        public void AddPlantByUserEvent(long userId)
+        {
+            ChangeUserStatus(userId, UserStatus.SendPlantName);
+            OnReply?.Invoke(new ReplyOnWantedAddPlant(userId));
+            
+        }
+
         public string GetPlantsByUser(User user)
         {
             return plantRepository.GetPlantsByUser(user.Id)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
-            
         }
-
-        public class Reply : IReply
-        {
-            public long UserId { get; }
-            public string Text { get; set; }
-            public ReplyType Type { get; set; }
-        }
-
-        public enum ReplyType
-        {
-            GetPlantsByUser
-        }
-
-        public event Action<Reply> OnReply;
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
         {
@@ -146,6 +181,7 @@ namespace Application
         public void Cancel(long userId)
         {
             userRepository.UpdateUser(new UserRecord(userId) {Status = UserStatusRecord.DefaultStatus});
+            OnReply.Invoke(new ReplyOnCancel(userId));
         }
     }
 }

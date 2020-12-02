@@ -1,3 +1,4 @@
+using System.Linq;
 using Application.Replies;
 
 namespace UserInterface
@@ -48,8 +49,9 @@ namespace UserInterface
             executor.AddCommand(commands[5], UserStatus.SendPlantWateringInterval);
             executor.AddCommand(commands[5], UserStatus.DeletePlantByName);
             client = new TelegramBotClient(token);
-            client.OnMessage += BotOnMessageReceived;
             app.SendNotification += (userId, plantName) => SendNotification(userId, plantName);
+            app.OnReply += reply => BuildMessageToUser(reply);
+            client.OnMessage += BotOnMessageReceived;
             client.StartReceiving();
             Console.ReadLine();
             client.StopReceiving();
@@ -60,6 +62,7 @@ namespace UserInterface
             var message = messageEventArgs.Message;
             if (message?.Type == MessageType.Text)
             {
+                // executor.ExecuteCommandMessage(message);
                 var answer = executor.ExecuteCommand(message);
                 var keyboard = keyboardController.GetKeyboard(answer);
                 SendAnswer(message.Chat, answer.AnswerText, keyboard);
@@ -68,15 +71,84 @@ namespace UserInterface
 
         public void BuildMessageToUser(IReply reply)
         {
+            Console.WriteLine("c");
+            var keyboard = keyboardController.GetMainMenuKeyboard();
+            var answerText = "Я не понимаю тебя. Если нужна справка, введи /help!";
             if (reply.GetType() == typeof(ReplyOnGetPlants))
             {
-                
+                if (!((ReplyOnGetPlants)reply).PlantsName.Any())
+                {
+                    answerText = "У тебя пока не записано растений!";
+                }
+                else
+                {
+                    answerText = "Вот все твои растения, про которые мне известно:\n";
+                    keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlants)reply).PlantsName.ToArray());
+                }
             }
+            else if (reply.GetType() == typeof(ReplyOnStart))
+            {
+                if (((ReplyOnStart)reply).IsAdded)
+                {
+                    answerText = $"Привет, {((ReplyOnStart) reply).UserName}!\n" +
+                                 $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
+                                 $"Введи /help для справки.";
+                }
+                else
+                {
+                    answerText = $"Снова здравствуй, {((ReplyOnStart) reply).UserName}! Если нужна справка - введи /help";
+                }
+            }
+            else if (reply.GetType() == typeof(ReplyOnCancel))
+            {
+                answerText = "Ну хорошо, ты снова в главном меню";
+            }
+            else if (reply.GetType() == typeof(ReplyOnGetPlantsToDelete))
+            {
+                answerText = "Какое растение ты хочешь удалить?";
+                keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlantsToDelete)reply).PlantsName.ToArray());
+            }
+            else if (reply.GetType() == typeof(ReplyOnDeletedPlant))
+            {
+                if (((ReplyOnDeletedPlant)reply).IsDeleted)
+                {
+                    answerText = $"Растение {((ReplyOnDeletedPlant)reply).DeletedPlantName} удалено!";
+                }
+                else
+                {
+                    answerText = "У тебя нет растения с таким именем!";
+                }
+            }
+            else if (reply.GetType() == typeof(ReplyOnWantedAddPlant))
+            {
+                answerText = "Как назовём твоё растение?";
+                keyboard = keyboardController.GetCancelKeyboard();
+            }
+            else if (reply.GetType() == typeof(ReplyOnSetPlantName))
+            {
+                // без проверки
+                answerText = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
+                             "Например, если твоё растение нужно поливать каждые три дня, напиши: 3.";
+                keyboard = keyboardController.GetCancelKeyboard();
+            }
+            else if (reply.GetType() == typeof(ReplyOnSetWateringInterval))
+            {
+                // без проверки
+                answerText = "Поздравляю, твоё растение добавлено!";
+                keyboard = keyboardController.GetCancelKeyboard();
+            }
+
+            SendAnswer(reply.UserId, answerText, keyboard);
         }
 
         private void SendAnswer(Chat chat, string answer, IReplyMarkup rm)
         {
             client.SendTextMessageAsync(chat.Id, answer, replyMarkup: rm);
+        }
+
+        private void SendAnswer(long userId, string answer, IReplyMarkup rm)
+        {
+            client.SendTextMessageAsync(userId, answer, replyMarkup: rm);
         }
 
         private void SendNotification(long chatId, string plantName)
