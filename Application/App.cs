@@ -13,7 +13,7 @@ namespace Application
         private IPlantRepository plantRepository;
         private Timer timer;
         public event Action<long, string> SendNotification;
-        public event Action<IReply> OnReply;
+        public event EventHandler<IReply> OnReply; 
 
         public App(IUserRepository userRepository, IPlantRepository plantRepository)
         {
@@ -80,18 +80,18 @@ namespace Application
             {
                 // проверка
                 SetNewPlantName(userId, message);
-                OnReply?.Invoke(new ReplyOnSetPlantName(userId));
+                OnReply?.Invoke(this, new ReplyOnSetPlantName(userId));
             }
             else if (status == UserStatus.SendPlantWateringInterval)
             {
                 // проверка
                 int.TryParse(message, out var interval);
                 AddNewPlantFromActivePlantWithWateringInterval(userId, interval);
-                OnReply?.Invoke(new ReplyOnSetWateringInterval(userId));
+                OnReply?.Invoke(this, new ReplyOnSetWateringInterval(userId));
             }
             else if (status == UserStatus.DeletePlantByName)
             {
-                OnReply?.Invoke(new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
+                OnReply?.Invoke(this, new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
             }
         }
         
@@ -99,12 +99,12 @@ namespace Application
         {
             var isAdded = AddUser(userId, userName);
             if (isAdded)
-                OnReply?.Invoke(new ReplyOnStart(userId, userName, isAdded));
+                OnReply?.Invoke(this, new ReplyOnStart(userId, userName, isAdded));
         }
         
         public void StartEvent(long userId, string userName)
         {
-            OnReply?.Invoke(new ReplyOnStart(userId, userName, AddUser(userId, userName)));
+            OnReply?.Invoke(this, new ReplyOnStart(userId, userName, AddUser(userId, userName)));
         }
 
         public void GetPlantsByUserEvent(long userId)
@@ -112,20 +112,20 @@ namespace Application
             Console.WriteLine("a");
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
-            OnReply?.Invoke(new ReplyOnGetPlants(userId, plants));
+            OnReply?.Invoke(this, new ReplyOnGetPlants(userId, plants));
         }
 
         public void GetPlantsToDeleteEvent(long userId)
         {
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
-            OnReply?.Invoke(new ReplyOnGetPlantsToDelete(userId, plants));
+            OnReply?.Invoke(this, new ReplyOnGetPlantsToDelete(userId, plants));
         }
         
         public void AddPlantByUserEvent(long userId)
         {
             ChangeUserStatus(userId, UserStatus.SendPlantName);
-            OnReply?.Invoke(new ReplyOnWantedAddPlant(userId));
+            OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId));
             
         }
 
@@ -181,7 +181,7 @@ namespace Application
         public void Cancel(long userId)
         {
             userRepository.UpdateUser(new UserRecord(userId) {Status = UserStatusRecord.DefaultStatus});
-            OnReply.Invoke(new ReplyOnCancel(userId));
+            OnReply?.Invoke(this, new ReplyOnCancel(userId));
         }
     }
 }

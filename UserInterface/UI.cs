@@ -23,7 +23,7 @@ namespace UserInterface
         public UI(App app, ICommandExecutor executor, KeyboardController keyboardController)
         {
             this.app = app;
-            this.executor = executor;
+            this.executor = new CommandExecutor(app);
             this.keyboardController = keyboardController;
             this.token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
         }
@@ -39,6 +39,8 @@ namespace UserInterface
                     new Commands.DeletePlantCommand(),
                     new Commands.CancelCommand()
                 };
+            app.SendNotification += SendNotification;
+            app.OnReply += (sender, reply) => BuildMessageToUser(reply);
             var commonStatus = new UserStatus[] { UserStatus.DefaultStatus, UserStatus.SendUserName };
             for (var i = 0; i < 5; i++)
             {
@@ -49,8 +51,6 @@ namespace UserInterface
             executor.AddCommand(commands[5], UserStatus.SendPlantWateringInterval);
             executor.AddCommand(commands[5], UserStatus.DeletePlantByName);
             client = new TelegramBotClient(token);
-            app.SendNotification += (userId, plantName) => SendNotification(userId, plantName);
-            app.OnReply += reply => BuildMessageToUser(reply);
             client.OnMessage += BotOnMessageReceived;
             client.StartReceiving();
             Console.ReadLine();
@@ -62,10 +62,10 @@ namespace UserInterface
             var message = messageEventArgs.Message;
             if (message?.Type == MessageType.Text)
             {
-                // executor.ExecuteCommandMessage(message);
-                var answer = executor.ExecuteCommand(message);
-                var keyboard = keyboardController.GetKeyboard(answer);
-                SendAnswer(message.Chat, answer.AnswerText, keyboard);
+                executor.ExecuteCommandMessage(message);
+                // var answer = executor.ExecuteCommand(message);
+                // var keyboard = keyboardController.GetKeyboard(answer);
+                // SendAnswer(message.Chat, answer.AnswerText, keyboard);
             }
         }
 
