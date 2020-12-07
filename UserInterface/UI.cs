@@ -121,21 +121,35 @@ namespace UserInterface
             }
             else if (reply.GetType() == typeof(ReplyOnWantedAddPlant))
             {
-                answerText = "Как назовём твоё растение?";
+                if (((ReplyOnWantedAddPlant)reply).TriedInvalidName)
+                {
+                    answerText = "Я не могу записать такое имя. Напиши в одну строку, не больше 25 символов, пожалуйста!";
+                }
+                else
+                {
+                    answerText = "Как назовём твоё растение?";
+                }
+
                 keyboard = keyboardController.GetCancelKeyboard();
             }
             else if (reply.GetType() == typeof(ReplyOnSetPlantName))
             {
-                // без проверки
-                answerText = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
-                             "Например, если твоё растение нужно поливать каждые три дня, напиши: 3.";
+                if (((ReplyOnSetPlantName)reply).TriedInvalidInterval)
+                {
+                    answerText = "Пожалуйста, введи целое положительное число.";
+                }
+                else
+                {
+                    answerText = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
+                                 "Например, если твоё растение нужно поливать каждые три дня, напиши: 3.";
+                }
+
                 keyboard = keyboardController.GetCancelKeyboard();
             }
             else if (reply.GetType() == typeof(ReplyOnSetWateringInterval))
             {
-                // без проверки
                 answerText = "Поздравляю, твоё растение добавлено!";
-                keyboard = keyboardController.GetCancelKeyboard();
+                keyboard = keyboardController.GetMainMenuKeyboard();
             }
 
             SendAnswer(reply.UserId, answerText, keyboard);

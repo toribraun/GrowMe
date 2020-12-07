@@ -78,14 +78,22 @@ namespace Application
             var status = GetUserStatus(userId);
             if (status == UserStatus.SendPlantName)
             {
-                // проверка
+                var input = message.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+                if (input.Length != 1 || input[0].Length > 25)
+                {
+                    OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId, true));
+                    return;
+                }    
                 SetNewPlantName(userId, message);
                 OnReply?.Invoke(this, new ReplyOnSetPlantName(userId));
             }
             else if (status == UserStatus.SendPlantWateringInterval)
             {
-                // проверка
-                int.TryParse(message, out var interval);
+                if (!int.TryParse(message, out var interval) || interval <= 0)
+                {
+                    OnReply?.Invoke(this, new ReplyOnSetPlantName(userId, true));
+                    return;
+                }
                 AddNewPlantFromActivePlantWithWateringInterval(userId, interval);
                 OnReply?.Invoke(this, new ReplyOnSetWateringInterval(userId));
             }
