@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.Design;
-using System.Linq;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
     using System;
     using System.Collections.Generic;
@@ -21,15 +18,16 @@ namespace UserInterface
         public event Action<long> OnGetPlantsToDelete;
         public event Action<long, string> OnStart;
         public event Action<long> OnCancel;
+        public event Action<long> OnHelp;
         public event Action<long, string> OnNonexistingCommand;
         public event Action<long, string> OnCheckUserExist;
 
         public CommandExecutor(App app)
         {
-            this.allCommands = new Dictionary<string, IUserCommand>();
-            this.commandsByStatus = new Dictionary<UserStatus, List<string>>();
-            this.allCommands.Add("/notacommand", new Commands.NonexistingCommand());
-            this.AddCommand(new Commands.StartCommand());
+            allCommands = new Dictionary<string, IUserCommand>();
+            commandsByStatus = new Dictionary<UserStatus, List<string>>();
+            allCommands.Add("/notacommand", new Commands.NonexistingCommand());
+            AddCommand(new Commands.StartCommand());
             OnStart += app.StartEvent;
             OnCancel += app.Cancel;
             OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
@@ -37,13 +35,15 @@ namespace UserInterface
             OnAddPlant += app.AddPlantByUserEvent;
             OnNonexistingCommand += (id, message) => app.HandleNonexistingCommand(id, message);
             OnCheckUserExist += (id, name) => app.CheckUserExistEvent(id, name);
+            OnHelp += app.GetHelp;
 
             commandsByEvents = new Dictionary<string, Action<long>>()
             {
-                {"мои растения", OnGetPlants},
-                {"добавить", OnAddPlant},
-                {"удалить", OnGetPlantsToDelete},
-                {"отмена", OnCancel}
+                { "мои растения", OnGetPlants },
+                { "добавить", OnAddPlant },
+                { "удалить", OnGetPlantsToDelete },
+                { "отмена", OnCancel },
+                { "/help", OnHelp }
             };
             this.app = app;
         }
@@ -82,45 +82,6 @@ namespace UserInterface
             }
         }
 
-        public Answer ExecuteCommand(Message message)
-        {
-            if (!this.app.UserExists(message.Chat.Id))
-            {
-                return this.Commands["/start"].Execute(message, this.app);
-            }
-        
-            var commandNames = this.Commands.Keys;
-            var userInput = message.Text;
-            var status = this.app.GetUserStatus(message.Chat.Id);
-            Answer answer = null;
-            foreach (var commandName in commandNames)
-            {
-                if (userInput.ToLower().Contains(commandName))
-                {
-                    // if (commandName.Contains("/"))
-                    // {
-                    //     this.app.Cancel(message.Chat.Id);
-                    //     answer = this.Commands[commandName].Execute(message, this.app);
-                    //     break;
-                    // }
-                    // else if (this.CommandsByStatus[status].Contains(commandName))
-                    // {
-                    //     answer = this.Commands[commandName].Execute(message, this.app);
-                    //     break;
-                    // }
-                    //
-                    commandsByEvents[commandName].Invoke(message.Chat.Id);
-                }
-            }
-        
-            if (answer == null)
-            {
-                return this.Commands["/notacommand"].Execute(message, this.app);
-            }
-        
-            return answer;
-        }
-
         public void ExecuteCommandMessage(Message message)
         {
             var userId = message.Chat.Id;
@@ -143,6 +104,44 @@ namespace UserInterface
             {
                 OnNonexistingCommand?.Invoke(userId, textMessage);
             }
+        }
+
+        public Answer ExecuteCommand(Message message)
+        {
+            // if (!this.app.UserExists(message.Chat.Id))
+            // {
+            //     return this.Commands["/start"].Execute(message, this.app);
+            // }
+            //
+            // var commandNames = this.Commands.Keys;
+            // var userInput = message.Text;
+            // var status = this.app.GetUserStatus(message.Chat.Id);
+            // Answer answer = null;
+            // foreach (var commandName in commandNames)
+            // {
+            //     if (userInput.ToLower().Contains(commandName))
+            //     {
+            //         // if (commandName.Contains("/"))
+            //         // {
+            //         //     this.app.Cancel(message.Chat.Id);
+            //         //     answer = this.Commands[commandName].Execute(message, this.app);
+            //         //     break;
+            //         // }
+            //         // else if (this.CommandsByStatus[status].Contains(commandName))
+            //         // {
+            //         //     answer = this.Commands[commandName].Execute(message, this.app);
+            //         //     break;
+            //         // }
+            //         //
+            //         commandsByEvents[commandName].Invoke(message.Chat.Id);
+            //     }
+            // }
+            //
+            // if (answer == null)
+            // {
+            //     return this.Commands["/notacommand"].Execute(message, this.app);
+            // }
+            return null;
         }
     }
 }

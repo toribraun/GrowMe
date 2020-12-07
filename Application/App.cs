@@ -12,7 +12,7 @@ namespace Application
         private IUserRepository userRepository;
         private IPlantRepository plantRepository;
         private Timer timer;
-        public event Action<long, string> SendNotification;
+        public event EventHandler<EventArgsSendNotifications> SendNotification;
         public event EventHandler<IReply> OnReply; 
 
         public App(IUserRepository userRepository, IPlantRepository plantRepository)
@@ -28,11 +28,22 @@ namespace Application
             timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
         }
 
+        public class EventArgsSendNotifications
+        {
+            public long UserId { get; }
+            public string PlantName { get; }
+            public EventArgsSendNotifications(long userId, string plantName)
+            {
+                UserId = userId;
+                PlantName = plantName;
+            }
+        }
+
         public void SendNotifications(object obj)
         {
             foreach (var plant in plantRepository.GetPlantsToWater())
             {
-                SendNotification?.Invoke(plant.UserId, plant.Name);
+                SendNotification?.Invoke(this, new EventArgsSendNotifications(plant.UserId, plant.Name));
             }
         }
         
@@ -73,6 +84,11 @@ namespace Application
             return new User(userRecord.Id, userRecord.Name);
         }
 
+        public void GetHelp(long userId)
+        {
+            OnReply?.Invoke(this, new ReplyOnHelp(userId));
+        }
+
         public void HandleNonexistingCommand(long userId, string message)
         {
             var status = GetUserStatus(userId);
@@ -102,6 +118,10 @@ namespace Application
             {
                 OnReply?.Invoke(this, new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
             }
+            else
+            {
+                OnReply?.Invoke(this, new ReplyOnNotCommand(userId));
+            }
         }
         
         public void CheckUserExistEvent(long userId, string userName)
@@ -128,7 +148,8 @@ namespace Application
         {
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
-            ChangeUserStatus(userId, UserStatus.DeletePlantByName);
+            if (plants.Any()) 
+                ChangeUserStatus(userId, UserStatus.DeletePlantByName);
             OnReply?.Invoke(this, new ReplyOnGetPlantsToDelete(userId, plants));
         }
         

@@ -5,7 +5,6 @@ namespace UserInterface
 {
     using System;
     using Application;
-    using Domain;
     using Telegram.Bot;
     using Telegram.Bot.Args;
     using Telegram.Bot.Types;
@@ -14,42 +13,38 @@ namespace UserInterface
 
     public class UI
     {
-        private App app;
         private ICommandExecutor executor;
         private KeyboardController keyboardController;
         private TelegramBotClient client;
         private string token;
 
-        public UI(App app, ICommandExecutor executor, KeyboardController keyboardController)
+        public UI(ICommandExecutor executor, KeyboardController keyboardController)
         {
-            this.app = app;
-            this.executor = new CommandExecutor(app);
+            this.executor = executor;
             this.keyboardController = keyboardController;
             this.token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
         }
 
         public void Run()
         {
-            var commands = new IUserCommand[]
-                {
-                    new Commands.StartCommand(),
-                    new Commands.HelpCommand(),
-                    new Commands.GetPlantsCommand(),
-                    new Commands.AddPlantCommand(),
-                    new Commands.DeletePlantCommand(),
-                    new Commands.CancelCommand()
-                };
-            app.SendNotification += SendNotification;
-            app.OnReply += (sender, reply) => BuildMessageToUser(reply);
-            var commonStatus = new UserStatus[] { UserStatus.DefaultStatus, UserStatus.SendUserName };
-            for (var i = 0; i < 5; i++)
-            {
-                executor.AddCommand(commands[i], commonStatus);
-            }
-
-            executor.AddCommand(commands[5], UserStatus.SendPlantName);
-            executor.AddCommand(commands[5], UserStatus.SendPlantWateringInterval);
-            executor.AddCommand(commands[5], UserStatus.DeletePlantByName);
+            // var commands = new IUserCommand[]
+            //     {
+            //         new Commands.StartCommand(),
+            //         new Commands.HelpCommand(),
+            //         new Commands.GetPlantsCommand(),
+            //         new Commands.AddPlantCommand(),
+            //         new Commands.DeletePlantCommand(),
+            //         new Commands.CancelCommand()
+            //     };
+            // var commonStatus = new UserStatus[] { UserStatus.DefaultStatus, UserStatus.SendUserName };
+            // for (var i = 0; i < 5; i++)
+            // {
+            //     executor.AddCommand(commands[i], commonStatus);
+            // }
+            //
+            // executor.AddCommand(commands[5], UserStatus.SendPlantName);
+            // executor.AddCommand(commands[5], UserStatus.SendPlantWateringInterval);
+            // executor.AddCommand(commands[5], UserStatus.DeletePlantByName);
             client = new TelegramBotClient(token);
             client.OnMessage += BotOnMessageReceived;
             client.StartReceiving();
@@ -71,7 +66,6 @@ namespace UserInterface
 
         public void BuildMessageToUser(IReply reply)
         {
-            Console.WriteLine("c");
             var keyboard = keyboardController.GetMainMenuKeyboard();
             var answerText = "Я не понимаю тебя. Если нужна справка, введи /help!";
             if (reply.GetType() == typeof(ReplyOnGetPlants))
@@ -82,21 +76,21 @@ namespace UserInterface
                 }
                 else
                 {
-                    answerText = "Вот все твои растения, про которые мне известно:\n";
-                    keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlants)reply).PlantsName.ToArray());
+                    answerText = "Вот все твои растения, про которые мне известно:\n\n" +
+                                 $"{string.Join('\n', ((ReplyOnGetPlants)reply).PlantsName)}";
                 }
             }
             else if (reply.GetType() == typeof(ReplyOnStart))
             {
                 if (((ReplyOnStart)reply).IsAdded)
                 {
-                    answerText = $"Привет, {((ReplyOnStart) reply).UserName}!\n" +
-                                 $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
-                                 $"Введи /help для справки.";
+                    answerText = $"Привет, {((ReplyOnStart)reply).UserName}!\n" +
+                                 "Я - бот, который будет помогать тебе в уходе за растениями.\n" +
+                                 "Введи /help для справки.";
                 }
                 else
                 {
-                    answerText = $"Снова здравствуй, {((ReplyOnStart) reply).UserName}! Если нужна справка - введи /help";
+                    answerText = $"Снова здравствуй, {((ReplyOnStart)reply).UserName}! Если нужна справка - введи /help";
                 }
             }
             else if (reply.GetType() == typeof(ReplyOnCancel))
@@ -105,8 +99,16 @@ namespace UserInterface
             }
             else if (reply.GetType() == typeof(ReplyOnGetPlantsToDelete))
             {
-                answerText = "Какое растение ты хочешь удалить?";
-                keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlantsToDelete)reply).PlantsName.ToArray());
+                var plantsNames = ((ReplyOnGetPlantsToDelete)reply).PlantsName.ToArray();
+                if (plantsNames.Length > 0)
+                {
+                    answerText = "Какое растение ты хочешь удалить?";
+                    keyboard = keyboardController.GetUserPlantsKeyboard(plantsNames.ToArray());
+                }
+                else
+                {
+                    answerText = "У тебя пока не записано растений!";
+                }
             }
             else if (reply.GetType() == typeof(ReplyOnDeletedPlant))
             {
@@ -151,7 +153,10 @@ namespace UserInterface
             else if (reply.GetType() == typeof(ReplyOnSetWateringInterval))
             {
                 answerText = "Поздравляю, твоё растение добавлено!";
-                keyboard = keyboardController.GetMainMenuKeyboard();
+            }
+            else if (reply.GetType() == typeof(ReplyOnHelp))
+            {
+                answerText = "Здесь должна быть справка";
             }
 
             SendAnswer(reply.UserId, answerText, keyboard);
@@ -167,7 +172,7 @@ namespace UserInterface
             client.SendTextMessageAsync(userId, answer, replyMarkup: rm);
         }
 
-        private void SendNotification(long chatId, string plantName)
+        public void SendNotification(long chatId, string plantName)
         {
             var answer = $"Самое время полить {plantName}!";
             client.SendTextMessageAsync(chatId, answer);

@@ -17,23 +17,25 @@ namespace UserInterface
             container.Bind<IPlantRepository>()
                 .ToConstant(new PlantRepository(new DatabaseCsvTable<PlantRecord>("users_plants.csv")))
                 .InSingletonScope();
-            container.Bind<App>().ToSelf();
+            container.Bind<App>().ToSelf().InSingletonScope();
 
-            container.Bind<ICommandExecutor>().To<CommandExecutor>();
-            container.Bind<KeyboardController>().ToSelf();
-            container.Bind<UI>().ToSelf();
+            container.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
+            container.Bind<KeyboardController>().ToSelf().InSingletonScope();
+            container.Bind<UI>().ToSelf().InSingletonScope();
             var ui = container.Get<UI>();
             var app = container.Get<App>();
             var executor = container.Get<CommandExecutor>();
+            app.SendNotification += (sender, args) => ui.SendNotification(args.UserId, args.PlantName);
+            app.OnReply += (sender, reply) => ui.BuildMessageToUser(reply);
 
             // executor.OnStart += app.StartEvent;
             // executor.OnCancel += app.Cancel;
             // executor.OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
             // executor.OnGetPlants += app.GetPlantsByUserEvent;
             // executor.OnAddPlant += app.AddPlantByUserEvent;
-            // executor.OnNonexistingCommand += (id, message) => app.HandleNonexistingCommand(id, message);
-            // executor.OnCheckUserExist += (id, name) => app.CheckUserExistEvent(id, name);
-            // app.OnReply += ui.BuildMessageToUser;
+            // executor.OnNonexistingCommand += app.HandleNonexistingCommand;
+            // executor.OnCheckUserExist += app.CheckUserExistEvent;
+            // executor.OnHelp += app.GetHelp;
 
             ui.Run();
         }
