@@ -12,8 +12,8 @@ namespace Domain
             get => wateringInterval;
             set
             {
-                if (value <= 0)
-                    throw new ArgumentException();
+                // if (value <= 0)
+                //     throw new ArgumentException();
                 wateringInterval = value;
             } }
         public DateTime NextWateringTime { get; set; }

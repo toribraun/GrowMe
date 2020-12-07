@@ -1,4 +1,8 @@
-﻿namespace UserInterface.Commands
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
+
+namespace UserInterface.Commands
 {
     using Application;
     using Domain;
@@ -20,7 +24,8 @@
             var plants = app
                 .GetPlantsByUser(new Domain.User(message.Chat.Id, message.Chat.FirstName))
                 .Split("\n");
-            if (plants[0] == string.Empty)
+            Console.WriteLine(plants.Length);
+            if (plants.Length == 0)
             {
                 return new Answer("У тебя пока не записано растений!", message.Chat.Id);
             }

@@ -44,7 +44,6 @@ namespace UserInterface
                 {"добавить", OnAddPlant},
                 {"удалить", OnGetPlantsToDelete},
                 {"отмена", OnCancel}
-                
             };
             this.app = app;
         }
@@ -98,19 +97,19 @@ namespace UserInterface
             {
                 if (userInput.ToLower().Contains(commandName))
                 {
-                    if (commandName.Contains("/"))
-                    {
-                        this.app.Cancel(message.Chat.Id);
-                        answer = this.Commands[commandName].Execute(message, this.app);
-                        break;
-                    }
-                    else if (this.CommandsByStatus[status].Contains(commandName))
-                    {
-                        answer = this.Commands[commandName].Execute(message, this.app);
-                        break;
-                    }
-        
-                    // commandsByEvents[commandName].Invoke(message.Chat.Id);
+                    // if (commandName.Contains("/"))
+                    // {
+                    //     this.app.Cancel(message.Chat.Id);
+                    //     answer = this.Commands[commandName].Execute(message, this.app);
+                    //     break;
+                    // }
+                    // else if (this.CommandsByStatus[status].Contains(commandName))
+                    // {
+                    //     answer = this.Commands[commandName].Execute(message, this.app);
+                    //     break;
+                    // }
+                    //
+                    commandsByEvents[commandName].Invoke(message.Chat.Id);
                 }
             }
         
@@ -121,7 +120,7 @@ namespace UserInterface
         
             return answer;
         }
-        
+
         public void ExecuteCommandMessage(Message message)
         {
             var userId = message.Chat.Id;
@@ -131,8 +130,10 @@ namespace UserInterface
 
             var commandNames = this.commandsByEvents.Keys;
             var isEvent = false;
-            foreach (var commandName in commandNames.Where(commandName => textMessage.ToLower().Contains(commandName)))
+
+            foreach (var commandName in commandNames)
             {
+                if (!textMessage.ToLower().Contains(commandName)) continue;
                 commandsByEvents[commandName]?.Invoke(userId);
                 isEvent = true;
                 break;

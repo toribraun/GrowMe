@@ -79,7 +79,8 @@ namespace Application
             if (status == UserStatus.SendPlantName)
             {
                 var input = message.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-                if (input.Length != 1 || input[0].Length > 25)
+                var existingPlants = GetPlantsByUser(new User(userId));
+                if (input.Length != 1 || input[0].Length > 25 || existingPlants.Contains(input[0]))
                 {
                     OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId, true));
                     return;
@@ -127,6 +128,7 @@ namespace Application
         {
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
+            ChangeUserStatus(userId, UserStatus.DeletePlantByName);
             OnReply?.Invoke(this, new ReplyOnGetPlantsToDelete(userId, plants));
         }
         
@@ -134,7 +136,6 @@ namespace Application
         {
             ChangeUserStatus(userId, UserStatus.SendPlantName);
             OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId));
-            
         }
 
         public string GetPlantsByUser(User user)
