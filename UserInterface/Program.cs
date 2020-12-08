@@ -22,20 +22,20 @@ namespace UserInterface
             container.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
             container.Bind<KeyboardController>().ToSelf().InSingletonScope();
             container.Bind<UI>().ToSelf().InSingletonScope();
+            var executor = container.Get<CommandExecutor>();
             var ui = container.Get<UI>();
             var app = container.Get<App>();
-            var executor = container.Get<CommandExecutor>();
             app.SendNotification += (sender, args) => ui.SendNotification(args.UserId, args.PlantName);
             app.OnReply += (sender, reply) => ui.BuildMessageToUser(reply);
 
-            // executor.OnStart += app.StartEvent;
-            // executor.OnCancel += app.Cancel;
-            // executor.OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
-            // executor.OnGetPlants += app.GetPlantsByUserEvent;
-            // executor.OnAddPlant += app.AddPlantByUserEvent;
-            // executor.OnNonexistingCommand += app.HandleNonexistingCommand;
-            // executor.OnCheckUserExist += app.CheckUserExistEvent;
-            // executor.OnHelp += app.GetHelp;
+            executor.OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
+            executor.OnCancel += (sender, userId) => app.Cancel(userId);
+            executor.OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
+            executor.OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
+            executor.OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
+            executor.OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
+            executor.OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
+            executor.OnHelp += (sender, userId) => app.GetHelp(userId);
 
             ui.Run();
         }

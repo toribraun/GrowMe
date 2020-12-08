@@ -10,17 +10,41 @@
     {
         private readonly Dictionary<string, IUserCommand> allCommands;
         private readonly Dictionary<UserStatus, List<string>> commandsByStatus;
-        private readonly Dictionary<string, Action<long>> commandsByEvents;
+        private readonly Dictionary<string, EventHandler<long>> commandsByEvents;
         private App app;
 
-        public event Action<long> OnGetPlants;
-        public event Action<long> OnAddPlant;
-        public event Action<long> OnGetPlantsToDelete;
-        public event Action<long, string> OnStart;
-        public event Action<long> OnCancel;
-        public event Action<long> OnHelp;
-        public event Action<long, string> OnNonexistingCommand;
-        public event Action<long, string> OnCheckUserExist;
+        public event EventHandler<long> OnGetPlants;
+        public event EventHandler<long> OnAddPlant;
+        public event EventHandler<long> OnGetPlantsToDelete;
+        public event EventHandler<EventUserArgs> OnStart;
+        public event EventHandler<long> OnCancel;
+        public event EventHandler<long> OnHelp;
+        public event EventHandler<EventCommandArgs> OnNonexistingCommand;
+        public event EventHandler<EventUserArgs> OnCheckUserExist;
+
+        public class EventCommandArgs
+        {
+            public long UserId { get; }
+            public string Message { get; }
+
+            public EventCommandArgs(long userId, string message)
+            {
+                UserId = userId;
+                Message = message;
+            }
+        }
+
+        public class EventUserArgs
+        {
+            public long UserId { get; }
+            public string UserName { get; }
+
+            public EventUserArgs(long userId, string userName)
+            {
+                UserId = userId;
+                UserName = userName;
+            }
+        }
 
         public CommandExecutor(App app)
         {
@@ -28,16 +52,16 @@
             commandsByStatus = new Dictionary<UserStatus, List<string>>();
             allCommands.Add("/notacommand", new Commands.NonexistingCommand());
             AddCommand(new Commands.StartCommand());
-            OnStart += app.StartEvent;
-            OnCancel += app.Cancel;
-            OnGetPlantsToDelete += app.GetPlantsToDeleteEvent;
-            OnGetPlants += app.GetPlantsByUserEvent;
-            OnAddPlant += app.AddPlantByUserEvent;
-            OnNonexistingCommand += (id, message) => app.HandleNonexistingCommand(id, message);
-            OnCheckUserExist += (id, name) => app.CheckUserExistEvent(id, name);
-            OnHelp += app.GetHelp;
+            // OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
+            // OnCancel += (sender, userId) => app.Cancel(userId);
+            // OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
+            // OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
+            // OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
+            // OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
+            // OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
+            // OnHelp += (sender, userId) => app.GetHelp(userId);
 
-            commandsByEvents = new Dictionary<string, Action<long>>()
+            commandsByEvents = new Dictionary<string, EventHandler<long>>()
             {
                 { "мои растения", OnGetPlants },
                 { "добавить", OnAddPlant },
@@ -87,7 +111,7 @@
             var userId = message.Chat.Id;
             var userName = message.Chat.Username;
             var textMessage = message.Text;
-            OnCheckUserExist?.Invoke(userId, userName);
+            OnCheckUserExist?.Invoke(this, new EventUserArgs(userId, userName));
 
             var commandNames = this.commandsByEvents.Keys;
             var isEvent = false;
@@ -95,14 +119,14 @@
             foreach (var commandName in commandNames)
             {
                 if (!textMessage.ToLower().Contains(commandName)) continue;
-                commandsByEvents[commandName]?.Invoke(userId);
+                commandsByEvents[commandName]?.Invoke(this, userId);
                 isEvent = true;
                 break;
             }
 
             if (!isEvent)
             {
-                OnNonexistingCommand?.Invoke(userId, textMessage);
+                OnNonexistingCommand?.Invoke(this, new EventCommandArgs(userId, textMessage));
             }
         }
 
