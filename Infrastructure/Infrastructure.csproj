@@ -19,7 +19,7 @@
       <None Update="users_plants.csv">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="common_plants.csv">
+      <None Update="plants_photos.csv">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

@@ -1,4 +1,6 @@
+using System.IO;
 using System.Net;
+using Telegram.Bot.Types.InputFiles;
 
 namespace UserInterface
 {
@@ -56,25 +58,14 @@ namespace UserInterface
         private void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
-            if (message?.Type == MessageType.Text)
+            switch (message?.Type)
             {
-                executor.ExecuteCommandMessage(message);
-            }
-            else if (message?.Type == MessageType.Photo)
-            {
-                var photoId = message.Photo.Last().FileId;
-                photoId =
-                    "AgACAgIAAxkBAAIGa1_PQZcvhdfhrQ266Bxx-QMJhvElAAKfsDEbDhd5Sj5zLM1SciHFkfPAly4AAwEAAwIAA3kAA7HnAwABHgQ";
-                var photo = client.GetFileAsync(photoId);
-                var url = $"https://api.telegram.org/file/bot{token}/" + photo.Result.FilePath;
-                Console.WriteLine(photoId);
-                using (var webClient = new WebClient())
-                {
-                    webClient.DownloadFile(new Uri(url), 
-                        $"{message.Chat.Id}_{message.Caption}_{DateTime.Now.ToString().Replace('/', '-')}.png");
-                }
-
-                SendAnswer(message.Chat, message.Caption, null);
+                case MessageType.Text:
+                    executor.ExecuteCommandMessage(message);
+                    break;
+                case MessageType.Photo:
+                    executor.ExecutePhoto(message);
+                    break;
             }
         }
 
@@ -90,8 +81,11 @@ namespace UserInterface
                 }
                 else
                 {
-                    answerText = "Вот все твои растения, про которые мне известно:\n\n" +
-                                 $"{string.Join('\n', ((ReplyOnGetPlants)reply).PlantsName)}";
+                    answerText = "Вот все твои растения, про которые мне известно.\n\n" +
+                                 $"{string.Join('\n', ((ReplyOnGetPlants)reply).PlantsName)}\n\n" +
+                                 $"Выбери растение, о котором хочешь узнать подробнее.\n" +
+                                 $"Нажми «Отмена», чтобы вернуться в главное меню.";
+                    keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlants)reply).PlantsName.ToArray());
                 }
             }
             else if (reply.GetType() == typeof(ReplyOnStart))
@@ -168,6 +162,24 @@ namespace UserInterface
             {
                 answerText = "Поздравляю, твоё растение добавлено!";
             }
+            else if (reply.GetType() == typeof(ReplyOnGetPlantPhoto))
+            {
+                if (((ReplyOnGetPlantPhoto)reply).IsExist)
+                {
+                    SendAnswerWithPhoto((ReplyOnGetPlantPhoto)reply);
+                    return;
+                }
+
+                answerText = "У этого растения пока нет фотографий.\n\n" +
+                             "Чтобы добавить фотографию своего растения, просто отправь её мне. " +
+                             "Не забудь добавить в описании имя растения, иначе я тебя не пойму :(";
+            }
+            else if (reply.GetType() == typeof(ReplyOnSetPlantPhoto))
+            {
+                answerText = ((ReplyOnSetPlantPhoto)reply).IsAdded ?
+                    $"Фотография для растения «{((ReplyOnSetPlantPhoto)reply).PlantName}» успешно добавлена" :
+                    "Что-то пошло не так :(";
+            }
             else if (reply.GetType() == typeof(ReplyOnHelp))
             {
                 answerText = "Здесь должна быть справка";
@@ -184,6 +196,25 @@ namespace UserInterface
         private void SendAnswer(long userId, string answer, IReplyMarkup rm)
         {
             client.SendTextMessageAsync(userId, answer, replyMarkup: rm);
+        }
+
+        private void SendAnswerWithPhoto(ReplyOnGetPlantPhoto reply)
+        {
+            var photo = client.GetFileAsync(reply.LastPhotoId);
+            var url = $"https://api.telegram.org/file/bot{token}/" + photo.Result.FilePath;
+            using (var webClient = new WebClient())
+            {
+                webClient.DownloadFile(new Uri(url), $"{reply.LastPhotoId}.png");
+            }
+            Console.WriteLine('c');
+            using (var fileStream = new FileStream($"{reply.LastPhotoId}.png", FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                client.SendPhotoAsync(
+                    reply.UserId,
+                    new InputOnlineFile(fileStream),
+                    reply.PlantName,
+                    replyMarkup: keyboardController.GetMainMenuKeyboard());
+            }
         }
 
         public void SendNotification(long chatId, string plantName)

@@ -19,6 +19,9 @@ namespace Domain
         public DateTime NextWateringTime { get; set; }
         public bool WateringStatus { get; set; }
         public DateTime AddingDate { get; set; }
+        
+        public string FirstPhotoId { get; set; }
+        public string LastPhotoId { get; set; }
         public bool ShouldBeDeleted { get; set; }
         
         public Plant() {}

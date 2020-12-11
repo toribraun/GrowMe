@@ -12,6 +12,7 @@ namespace UserInterface
         public void AddCommand(IUserCommand command, UserStatus status);
 
         public void AddCommand(IUserCommand command, params UserStatus[] status);
+        public void ExecutePhoto(Message message);
 
         // public Answer ExecuteCommand(Message message);
 

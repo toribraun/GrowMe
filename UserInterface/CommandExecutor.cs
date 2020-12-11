@@ -1,4 +1,6 @@
-﻿namespace UserInterface
+﻿using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+
+namespace UserInterface
 {
     using System;
     using System.Collections.Generic;
@@ -22,6 +24,7 @@
         public event EventHandler<long> OnHelp;
         public event EventHandler<EventCommandArgs> OnNonexistingCommand;
         public event EventHandler<EventUserArgs> OnCheckUserExist;
+        public event EventHandler<EventPhotoArgs> OnSendPhoto;
 
         public class EventCommandArgs
         {
@@ -47,6 +50,20 @@
             }
         }
 
+        public class EventPhotoArgs
+        {
+            public long UserId { get; }
+            public string PlantName { get; }
+            public string PhotoId { get; }
+
+            public EventPhotoArgs(long userId, string plantName, string photoId)
+            {
+                UserId = userId;
+                PlantName = plantName;
+                PhotoId = photoId;
+            }
+        }
+
         public CommandExecutor(App app)
         {
             allCommands = new Dictionary<string, IUserCommand>();
@@ -58,9 +75,13 @@
             OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
             OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
             OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
-            OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
-            OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
+            OnNonexistingCommand += (sender, commandArgs) =>
+                app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
+            OnCheckUserExist += (sender, checkUserArgs) =>
+                app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
             OnHelp += (sender, userId) => app.GetHelp(userId);
+            OnSendPhoto += (sender, photoArgs) =>
+                app.AddPlantPhotoEvent(photoArgs.UserId, photoArgs.PlantName, photoArgs.PhotoId);
 
             commandsByEvents = new Dictionary<string, EventHandler<long>>()
             {
@@ -95,6 +116,13 @@
             {
                 OnNonexistingCommand?.Invoke(this, new EventCommandArgs(userId, textMessage));
             }
+        }
+
+        public void ExecutePhoto(Message message)
+        {
+            OnSendPhoto?.Invoke(
+                this,
+                new EventPhotoArgs(message.Chat.Id, message.Caption, message.Photo.Last().FileId));
         }
 
         public Dictionary<string, IUserCommand> Commands => this.allCommands;

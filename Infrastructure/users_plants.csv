@@ -1,1 +1,1 @@
-Name;UserId;WateringInterval;NextWateringTime;WateringStatus;AddingDate;ShouldBeDeleted
+Name;UserId;WateringInterval;NextWateringTime;WateringStatus;AddingDate;FirstPhotoId;LastPhotoId;ShouldBeDeleted

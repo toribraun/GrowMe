@@ -46,6 +46,7 @@ namespace Infrastructure
         SendUserName,
         SendPlantName,
         SendPlantWateringInterval,
-        DeletePlantByName
+        DeletePlantByName,
+        GetPlantsNames
     }
 }

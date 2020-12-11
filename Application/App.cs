@@ -60,7 +60,22 @@ namespace Application
             NextWateringTime = plant.NextWateringTime,
             WateringStatus = plant.WateringStatus,
             AddingDate = plant.AddingDate,
-            ShouldBeDeleted = plant.ShouldBeDeleted
+            ShouldBeDeleted = plant.ShouldBeDeleted,
+            FirstPhotoId = plant.FirstPhotoId,
+            LastPhotoId = plant.LastPhotoId,
+        };
+        
+        private Plant PlantRecordToPlant(PlantRecord plant) => new Plant(
+            plant.Name, 
+            plant.UserId, 
+            plant.WateringInterval)
+        {
+            NextWateringTime = plant.NextWateringTime,
+            WateringStatus = plant.WateringStatus,
+            AddingDate = plant.AddingDate,
+            ShouldBeDeleted = plant.ShouldBeDeleted,
+            FirstPhotoId = plant.FirstPhotoId,
+            LastPhotoId = plant.LastPhotoId,
         };
         
         public bool AddUser(long userId, string userName)
@@ -92,41 +107,68 @@ namespace Application
         public void HandleNonexistingCommand(long userId, string message)
         {
             var status = GetUserStatus(userId);
-            if (status == UserStatus.SendPlantName)
+            switch (status)
             {
-                var input = message.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-                var existingPlants = GetPlantsByUser(new User(userId));
-                if (input.Length != 1 || input[0].Length > 25 || existingPlants.Contains(input[0]))
+                case UserStatus.GetPlantsNames:
                 {
-                    OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId, true));
-                    return;
-                }    
-                SetNewPlantName(userId, message);
-                OnReply?.Invoke(this, new ReplyOnSetPlantName(userId));
-            }
-            else if (status == UserStatus.SendPlantWateringInterval)
-            {
-                if (!int.TryParse(message, out var interval) || interval <= 0)
-                {
-                    OnReply?.Invoke(this, new ReplyOnSetPlantName(userId, true));
-                    return;
+                    var existingPlants = GetPlantsByUser(new User(userId));
+                    if (existingPlants.Contains(message))
+                    {
+                        var plant = GetPlantByUser(new User(userId), message);
+                        Console.WriteLine("");
+                        if (plant.FirstPhotoId != null && plant.LastPhotoId != null)
+                            OnReply?.Invoke(
+                            this, 
+                            new ReplyOnGetPlantPhoto(userId, 
+                                plant.Name, plant.FirstPhotoId, plant.LastPhotoId, plant.AddingDate, true));
+                        else
+                        {
+                            OnReply?.Invoke(this, 
+                                new ReplyOnGetPlantPhoto(userId,false));
+                        }
+                    }
+
+                    break;
                 }
-                AddNewPlantFromActivePlantWithWateringInterval(userId, interval);
-                OnReply?.Invoke(this, new ReplyOnSetWateringInterval(userId));
-            }
-            else if (status == UserStatus.DeletePlantByName)
-            {
-                OnReply?.Invoke(this, new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
-            }
-            else
-            {
-                OnReply?.Invoke(this, new ReplyOnNotCommand(userId));
+                case UserStatus.SendPlantName:
+                {
+                    var input = message.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+                    var existingPlants = GetPlantsByUser(new User(userId));
+                    if (input.Length != 1 || input[0].Length > 25 || existingPlants.Contains(input[0]))
+                    {
+                        OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId, true));
+                        return;
+                    }    
+                    SetNewPlantName(userId, message);
+                    OnReply?.Invoke(this, new ReplyOnSetPlantName(userId));
+                    break;
+                }
+                case UserStatus.SendPlantWateringInterval:
+                {
+                    if (!int.TryParse(message, out var interval) || interval <= 0)
+                    {
+                        OnReply?.Invoke(this, new ReplyOnSetPlantName(userId, true));
+                        return;
+                    }
+                    AddNewPlantFromActivePlantWithWateringInterval(userId, interval);
+                    OnReply?.Invoke(this, new ReplyOnSetWateringInterval(userId));
+                    break;
+                }
+                case UserStatus.DeletePlantByName:
+                    OnReply?.Invoke(this, new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
+                    break;
+                case UserStatus.DefaultStatus:
+                    break;
+                case UserStatus.SendUserName:
+                    break;
+                default:
+                    OnReply?.Invoke(this, new ReplyOnNotCommand(userId));
+                    break;
             }
         }
         
         public void CheckUserExistEvent(long userId, string userName)
         {
-            Console.WriteLine("c");
             var isAdded = AddUser(userId, userName);
             if (isAdded)
                 OnReply?.Invoke(this, new ReplyOnStart(userId, userName, isAdded));
@@ -139,7 +181,6 @@ namespace Application
 
         public void GetPlantsByUserEvent(long userId)
         {
-            Console.WriteLine("a");
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
             OnReply?.Invoke(this, new ReplyOnGetPlants(userId, plants));
@@ -159,11 +200,24 @@ namespace Application
             ChangeUserStatus(userId, UserStatus.SendPlantName);
             OnReply?.Invoke(this, new ReplyOnWantedAddPlant(userId));
         }
+        
+        public void AddPlantPhotoEvent(long userId, string plantName, string photoId)
+        {
+            var isAdded = AddPhoto(userId, plantName, photoId);
+            OnReply?.Invoke(this, new ReplyOnSetPlantPhoto(userId, plantName, isAdded));
+        }
 
         public string GetPlantsByUser(User user)
         {
             return plantRepository.GetPlantsByUser(user.Id)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
+        }
+        
+        public Plant GetPlantByUser(User user, string plantName)
+        {
+            return PlantRecordToPlant(plantRepository
+                .GetPlantsByUser(user.Id)
+                .FirstOrDefault(p => p.Name == plantName));
         }
 
         public void ChangeUserStatus(long userId, UserStatus newStatus)
@@ -189,6 +243,22 @@ namespace Application
                 ActivePlantName = plantName
             });
             return true;
+        }
+
+        public bool AddPhoto(long userId, string plantName, string photoId)
+        {
+            var currentPlant = plantRepository
+                .GetPlantsByUser(userId)
+                .FirstOrDefault(p => p.Name == plantName);
+            if (currentPlant == null) 
+                return false;
+            currentPlant.LastPhotoId = photoId;
+            Console.WriteLine("LastPhotoId");
+            currentPlant.FirstPhotoId ??= photoId;
+            Console.WriteLine("FirstPhotoId");
+            plantRepository.UpdatePlant(currentPlant);
+            return true;
+
         }
 
         public bool DeletePlant(long userId, string plantName)
