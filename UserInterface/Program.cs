@@ -1,8 +1,7 @@
-﻿using Infrastructure;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
     using Application;
+    using Infrastructure;
     using Ninject;
 
     public static class Program
@@ -25,17 +24,17 @@ namespace UserInterface
             var executor = container.Get<CommandExecutor>();
             var ui = container.Get<UI>();
             var app = container.Get<App>();
+
+            // executor.OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
+            // executor.OnCancel += (sender, userId) => app.Cancel(userId);
+            // executor.OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
+            // executor.OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
+            // executor.OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
+            // executor.OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
+            // executor.OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
+            // executor.OnHelp += (sender, userId) => app.GetHelp(userId);
             app.SendNotification += (sender, args) => ui.SendNotification(args.UserId, args.PlantName);
             app.OnReply += (sender, reply) => ui.BuildMessageToUser(reply);
-
-            executor.OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
-            executor.OnCancel += (sender, userId) => app.Cancel(userId);
-            executor.OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
-            executor.OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
-            executor.OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
-            executor.OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
-            executor.OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
-            executor.OnHelp += (sender, userId) => app.GetHelp(userId);
 
             ui.Run();
         }

@@ -126,6 +126,7 @@ namespace Application
         
         public void CheckUserExistEvent(long userId, string userName)
         {
+            Console.WriteLine("c");
             var isAdded = AddUser(userId, userName);
             if (isAdded)
                 OnReply?.Invoke(this, new ReplyOnStart(userId, userName, isAdded));

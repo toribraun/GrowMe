@@ -1,10 +1,11 @@
-using System.Linq;
-using Application.Replies;
+using System.Net;
 
 namespace UserInterface
 {
     using System;
+    using System.Linq;
     using Application;
+    using Application.Replies;
     using Telegram.Bot;
     using Telegram.Bot.Args;
     using Telegram.Bot.Types;
@@ -58,9 +59,22 @@ namespace UserInterface
             if (message?.Type == MessageType.Text)
             {
                 executor.ExecuteCommandMessage(message);
-                // var answer = executor.ExecuteCommand(message);
-                // var keyboard = keyboardController.GetKeyboard(answer);
-                // SendAnswer(message.Chat, answer.AnswerText, keyboard);
+            }
+            else if (message?.Type == MessageType.Photo)
+            {
+                var photoId = message.Photo.Last().FileId;
+                photoId =
+                    "AgACAgIAAxkBAAIGa1_PQZcvhdfhrQ266Bxx-QMJhvElAAKfsDEbDhd5Sj5zLM1SciHFkfPAly4AAwEAAwIAA3kAA7HnAwABHgQ";
+                var photo = client.GetFileAsync(photoId);
+                var url = $"https://api.telegram.org/file/bot{token}/" + photo.Result.FilePath;
+                Console.WriteLine(photoId);
+                using (var webClient = new WebClient())
+                {
+                    webClient.DownloadFile(new Uri(url), 
+                        $"{message.Chat.Id}_{message.Caption}_{DateTime.Now.ToString().Replace('/', '-')}.png");
+                }
+
+                SendAnswer(message.Chat, message.Caption, null);
             }
         }
 

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using Application;
     using Domain;
     using Telegram.Bot.Types;
@@ -52,14 +53,14 @@
             commandsByStatus = new Dictionary<UserStatus, List<string>>();
             allCommands.Add("/notacommand", new Commands.NonexistingCommand());
             AddCommand(new Commands.StartCommand());
-            // OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
-            // OnCancel += (sender, userId) => app.Cancel(userId);
-            // OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
-            // OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
-            // OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
-            // OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
-            // OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
-            // OnHelp += (sender, userId) => app.GetHelp(userId);
+            OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
+            OnCancel += (sender, userId) => app.Cancel(userId);
+            OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
+            OnGetPlants += (sender, userId) => app.GetPlantsByUserEvent(userId);
+            OnAddPlant += (sender, userId) => app.AddPlantByUserEvent(userId);
+            OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
+            OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
+            OnHelp += (sender, userId) => app.GetHelp(userId);
 
             commandsByEvents = new Dictionary<string, EventHandler<long>>()
             {
@@ -69,7 +70,31 @@
                 { "отмена", OnCancel },
                 { "/help", OnHelp }
             };
-            this.app = app;
+            // this.app = app;
+        }
+
+        public void ExecuteCommandMessage(Message message)
+        {
+            var userId = message.Chat.Id;
+            var userName = message.Chat.Username;
+            var textMessage = message.Text;
+            OnCheckUserExist?.Invoke(this, new EventUserArgs(userId, userName));
+
+            var commandNames = this.commandsByEvents.Keys;
+            var isEvent = false;
+
+            foreach (var commandName in commandNames
+                .Where(commandName => textMessage.ToLower().Contains(commandName)))
+            {
+                commandsByEvents[commandName]?.Invoke(this, userId);
+                isEvent = true;
+                break;
+            }
+
+            if (!isEvent)
+            {
+                OnNonexistingCommand?.Invoke(this, new EventCommandArgs(userId, textMessage));
+            }
         }
 
         public Dictionary<string, IUserCommand> Commands => this.allCommands;
@@ -106,32 +131,8 @@
             }
         }
 
-        public void ExecuteCommandMessage(Message message)
-        {
-            var userId = message.Chat.Id;
-            var userName = message.Chat.Username;
-            var textMessage = message.Text;
-            OnCheckUserExist?.Invoke(this, new EventUserArgs(userId, userName));
-
-            var commandNames = this.commandsByEvents.Keys;
-            var isEvent = false;
-
-            foreach (var commandName in commandNames)
-            {
-                if (!textMessage.ToLower().Contains(commandName)) continue;
-                commandsByEvents[commandName]?.Invoke(this, userId);
-                isEvent = true;
-                break;
-            }
-
-            if (!isEvent)
-            {
-                OnNonexistingCommand?.Invoke(this, new EventCommandArgs(userId, textMessage));
-            }
-        }
-
-        public Answer ExecuteCommand(Message message)
-        {
+        // public Answer ExecuteCommand(Message message)
+        // {
             // if (!this.app.UserExists(message.Chat.Id))
             // {
             //     return this.Commands["/start"].Execute(message, this.app);
@@ -165,7 +166,7 @@
             // {
             //     return this.Commands["/notacommand"].Execute(message, this.app);
             // }
-            return null;
-        }
+            // return null;
+        // }
     }
 }
