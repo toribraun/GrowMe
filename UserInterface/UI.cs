@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using Telegram.Bot.Types.InputFiles;
@@ -198,23 +199,18 @@ namespace UserInterface
             client.SendTextMessageAsync(userId, answer, replyMarkup: rm);
         }
 
-        private void SendAnswerWithPhoto(ReplyOnGetPlantPhoto reply)
+        private async void SendAnswerWithPhoto(ReplyOnGetPlantPhoto reply)
         {
-            var photo = client.GetFileAsync(reply.LastPhotoId);
-            var url = $"https://api.telegram.org/file/bot{token}/" + photo.Result.FilePath;
-            using (var webClient = new WebClient())
-            {
-                webClient.DownloadFile(new Uri(url), $"{reply.LastPhotoId}.png");
-            }
-            Console.WriteLine('c');
-            using (var fileStream = new FileStream($"{reply.LastPhotoId}.png", FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                client.SendPhotoAsync(
-                    reply.UserId,
-                    new InputOnlineFile(fileStream),
-                    reply.PlantName,
-                    replyMarkup: keyboardController.GetMainMenuKeyboard());
-            }
+            var text = $"{reply.PlantName}\n\nДата добавления: {reply.AddingDatetime.Date.ToShortDateString()}";
+
+            await client.SendMediaGroupAsync(
+                new List<IAlbumInputMedia>()
+                {
+                    new InputMediaPhoto(new InputMedia(reply.FirstPhotoId)),
+                    new InputMediaPhoto(new InputMedia(reply.LastPhotoId)),
+                }, reply.UserId);
+
+            SendAnswer(reply.UserId, text, keyboardController.GetMainMenuKeyboard());
         }
 
         public void SendNotification(long chatId, string plantName)

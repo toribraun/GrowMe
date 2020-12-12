@@ -115,16 +115,15 @@ namespace Application
                     if (existingPlants.Contains(message))
                     {
                         var plant = GetPlantByUser(new User(userId), message);
-                        Console.WriteLine("");
-                        if (plant.FirstPhotoId != null && plant.LastPhotoId != null)
-                            OnReply?.Invoke(
-                            this, 
-                            new ReplyOnGetPlantPhoto(userId, 
-                                plant.Name, plant.FirstPhotoId, plant.LastPhotoId, plant.AddingDate, true));
-                        else
-                        {
+                        if (string.IsNullOrEmpty(plant.FirstPhotoId) || string.IsNullOrEmpty(plant.LastPhotoId))
                             OnReply?.Invoke(this, 
                                 new ReplyOnGetPlantPhoto(userId,false));
+                        else
+                        {
+                            OnReply?.Invoke(
+                                this, 
+                                new ReplyOnGetPlantPhoto(userId, 
+                                    plant.Name, plant.FirstPhotoId, plant.LastPhotoId, plant.AddingDate, true));
                         }
                     }
 
@@ -183,6 +182,7 @@ namespace Application
         {
             var plants = plantRepository.GetPlantsByUser(userId)
                 .Select(record => record.Name);
+            ChangeUserStatus(userId, UserStatus.GetPlantsNames);
             OnReply?.Invoke(this, new ReplyOnGetPlants(userId, plants));
         }
 
@@ -254,7 +254,8 @@ namespace Application
                 return false;
             currentPlant.LastPhotoId = photoId;
             Console.WriteLine("LastPhotoId");
-            currentPlant.FirstPhotoId ??= photoId;
+            if (string.IsNullOrEmpty(currentPlant.FirstPhotoId))
+                currentPlant.FirstPhotoId = photoId;
             Console.WriteLine("FirstPhotoId");
             plantRepository.UpdatePlant(currentPlant);
             return true;

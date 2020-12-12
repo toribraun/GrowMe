@@ -1,4 +1,6 @@
-﻿using Domain;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Domain;
 
 namespace UserInterface
 {
@@ -38,13 +40,9 @@ namespace UserInterface
         internal IReplyMarkup GetUserPlantsKeyboard(string[] plants)
         {
             ReplyKeyboardMarkup keyboard;
-            var buttons = new KeyboardButton[plants.Length + 1];
-            for (var i = 0; i < buttons.Length - 1; i++)
-            {
-                buttons[i] = new KeyboardButton(plants[i]);
-            }
-
-            buttons[^1] = "Отмена";
+            var buttons = plants
+                .Select(p => new KeyboardButton[] { p })
+                .Append(new KeyboardButton[] { "Отмена" });
             keyboard = new ReplyKeyboardMarkup(buttons, true);
             return keyboard;
         }
