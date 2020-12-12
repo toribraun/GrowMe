@@ -202,15 +202,19 @@ namespace UserInterface
         private async void SendAnswerWithPhoto(ReplyOnGetPlantPhoto reply)
         {
             var text = $"{reply.PlantName}\n\nДата добавления: {reply.AddingDatetime.Date.ToShortDateString()}";
+            var photos = new List<IAlbumInputMedia>();
 
-            await client.SendMediaGroupAsync(
-                new List<IAlbumInputMedia>()
-                {
-                    new InputMediaPhoto(new InputMedia(reply.FirstPhotoId)),
-                    new InputMediaPhoto(new InputMedia(reply.LastPhotoId)),
-                }, reply.UserId);
+            if (!string.IsNullOrEmpty(reply.FirstPhotoId))
+                photos.Add(new InputMediaPhoto(new InputMedia(reply.FirstPhotoId)));
 
-            SendAnswer(reply.UserId, text, keyboardController.GetMainMenuKeyboard());
+            if (!string.IsNullOrEmpty(reply.LastPhotoId))
+                photos.Add(new InputMediaPhoto(new InputMedia(reply.LastPhotoId)));
+
+            if (photos.Any())
+            {
+                await client.SendMediaGroupAsync(photos, reply.UserId);
+                SendAnswer(reply.UserId, text, keyboardController.GetMainMenuKeyboard());
+            }
         }
 
         public void SendNotification(long chatId, string plantName)

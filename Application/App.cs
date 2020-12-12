@@ -115,7 +115,7 @@ namespace Application
                     if (existingPlants.Contains(message))
                     {
                         var plant = GetPlantByUser(new User(userId), message);
-                        if (string.IsNullOrEmpty(plant.FirstPhotoId) || string.IsNullOrEmpty(plant.LastPhotoId))
+                        if (string.IsNullOrEmpty(plant.FirstPhotoId))
                             OnReply?.Invoke(this, 
                                 new ReplyOnGetPlantPhoto(userId,false));
                         else
@@ -252,11 +252,10 @@ namespace Application
                 .FirstOrDefault(p => p.Name == plantName);
             if (currentPlant == null) 
                 return false;
-            currentPlant.LastPhotoId = photoId;
-            Console.WriteLine("LastPhotoId");
             if (string.IsNullOrEmpty(currentPlant.FirstPhotoId))
                 currentPlant.FirstPhotoId = photoId;
-            Console.WriteLine("FirstPhotoId");
+            else
+                currentPlant.LastPhotoId = photoId;
             plantRepository.UpdatePlant(currentPlant);
             return true;
 
