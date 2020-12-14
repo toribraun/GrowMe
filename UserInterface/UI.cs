@@ -181,6 +181,10 @@ namespace UserInterface
                     $"Фотография для растения «{((ReplyOnSetPlantPhoto)reply).PlantName}» успешно добавлена" :
                     "Что-то пошло не так :(";
             }
+            else if (reply.GetType() == typeof(ReplyOnSchedule))
+            {
+                answerText = ((ReplyOnSchedule)reply).ScheduleMessage;
+            }
             else if (reply.GetType() == typeof(ReplyOnHelp))
             {
                 answerText = "Здесь должна быть справка";

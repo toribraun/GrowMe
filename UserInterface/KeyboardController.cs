@@ -24,7 +24,8 @@ namespace UserInterface
             {
                 new KeyboardButton("Мои растения"),
                 new KeyboardButton("Добавить растение"),
-                new KeyboardButton("Удалить растение")
+                new KeyboardButton("Удалить растение"),
+                new KeyboardButton("Расписание")
             }, true);
         }
 

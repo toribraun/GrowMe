@@ -28,4 +28,9 @@
       <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="ScheduleStatistics.cs" />
+      <Compile Remove="StatisticsMaker.cs" />
+    </ItemGroup>
+
 </Project>

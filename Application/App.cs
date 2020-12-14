@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Application.Replies;
@@ -88,15 +89,69 @@ namespace Application
 
         public bool UserExists(long userId)
         {
-            if (userRepository.GetUser(userId) == null)
-                return false;
-            return true;
+            return userRepository.GetUser(userId) != null;
         }
 
         public User GetUserById(long userId)
         {
             var userRecord = userRepository.GetUser(userId);
             return new User(userRecord.Id, userRecord.Name);
+        }
+
+        public void GetWeekSchedule(long userId)
+        {
+            OnReply?.Invoke(this, new ReplyOnSchedule(userId,
+                GetResultScheduleLine(GetPlantsToWaterByDayDictionary(userId))));
+        }
+
+        private static Dictionary<DateTime, List<string>> GetEmptyPlantsToWaterByDayDictionary()
+        {
+            var plantsToWaterByDay = new Dictionary<DateTime, List<string>>();
+
+            for (var i = 1; i < 8; i++)
+            {
+                plantsToWaterByDay.Add(DateTime.Today.Date.AddDays(i), new List<string>());
+            }
+
+            return plantsToWaterByDay;
+        }
+
+        private Dictionary<DateTime, List<string>> GetPlantsToWaterByDayDictionary(long userId)
+        {
+            var plantsToWaterByDay = GetEmptyPlantsToWaterByDayDictionary();
+            var plantNames = GetPlantsByUser(new User(userId)).Split('\n');
+
+            foreach (var plantName in plantNames)
+            {
+                if (plantName == "") break;
+                var currentPlant = GetPlantByUser(new User(userId), plantName);
+                for (var nextDate = currentPlant.NextWateringTime.Date;
+                    nextDate < DateTime.Today.Date.AddDays(8);
+                    nextDate = nextDate.AddDays(currentPlant.WateringInterval))
+                {
+                    plantsToWaterByDay[nextDate].Add(currentPlant.Name);
+                }
+            }
+
+            return plantsToWaterByDay;
+        }
+        
+        private static string GetResultScheduleLine(Dictionary<DateTime, List<string>> plantsToWaterByDay)
+        {
+            var result = "";
+            foreach (var date in plantsToWaterByDay.Keys)
+            {
+                var currentPlants = "";
+
+                foreach (var plant in plantsToWaterByDay[date])
+                {
+                    currentPlants += $"{plant}, ";
+                }
+
+                result += $"{date.Day}.{date.Month}: {currentPlants.TrimEnd(',', ' ')}\n";
+            }
+
+            return result;
         }
 
         public void GetHelp(long userId)

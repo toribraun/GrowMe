@@ -25,6 +25,7 @@ namespace UserInterface
         public event EventHandler<EventCommandArgs> OnNonexistingCommand;
         public event EventHandler<EventUserArgs> OnCheckUserExist;
         public event EventHandler<EventPhotoArgs> OnSendPhoto;
+        public event EventHandler<long> OnSchedule;
 
         public class EventCommandArgs
         {
@@ -82,6 +83,7 @@ namespace UserInterface
             OnHelp += (sender, userId) => app.GetHelp(userId);
             OnSendPhoto += (sender, photoArgs) =>
                 app.AddPlantPhotoEvent(photoArgs.UserId, photoArgs.PlantName, photoArgs.PhotoId);
+            OnSchedule += (sender, userId) => app.GetWeekSchedule(userId);
 
             commandsByEvents = new Dictionary<string, EventHandler<long>>()
             {
@@ -89,7 +91,8 @@ namespace UserInterface
                 { "добавить", OnAddPlant },
                 { "удалить", OnGetPlantsToDelete },
                 { "отмена", OnCancel },
-                { "/help", OnHelp }
+                { "/help", OnHelp },
+                { "расписание", OnSchedule }
             };
             // this.app = app;
         }
