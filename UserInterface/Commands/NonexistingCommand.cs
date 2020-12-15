@@ -2,10 +2,9 @@
 {
     using System;
     using Application;
-    using Domain;
     using Telegram.Bot.Types;
 
-    internal class NonexistingCommand : IUserCommand
+    internal class NonexistingCommand
     {
         private string[] names;
 
@@ -16,24 +15,24 @@
 
         public string[] Names => this.names;
 
-        public Answer Execute(Message message, App app)
-        {
-            var status = app.GetUserStatus(message.Chat.Id);
-            if (status == UserStatus.SendPlantName)
-            {
-                return new Answer(NamePlant(message, app), message.Chat.Id, UserStatus.SendPlantWateringInterval);
-            }
-            else if (status == UserStatus.SendPlantWateringInterval)
-            {
-                return new Answer(this.SetWateringInterval(message, app), message.Chat.Id);
-            }
-            else if (app.GetUserStatus(message.Chat.Id) == UserStatus.DeletePlantByName)
-            {
-                return new Answer(this.DeletePlant(message, app), message.Chat.Id);
-            }
-
-            return new Answer("Я не понимаю тебя. Если нужна справка, введи /help!", message.Chat.Id);
-        }
+        // public Answer Execute(Message message, App app)
+        // {
+        //     var status = app.GetUserStatus(message.Chat.Id);
+        //     if (status == UserStatus.SendPlantName)
+        //     {
+        //         return new Answer(NamePlant(message, app), message.Chat.Id, UserStatus.SendPlantWateringInterval);
+        //     }
+        //     else if (status == UserStatus.SendPlantWateringInterval)
+        //     {
+        //         return new Answer(this.SetWateringInterval(message, app), message.Chat.Id);
+        //     }
+        //     else if (app.GetUserStatus(message.Chat.Id) == UserStatus.DeletePlantByName)
+        //     {
+        //         return new Answer(this.DeletePlant(message, app), message.Chat.Id);
+        //     }
+        //
+        //     return new Answer("Я не понимаю тебя. Если нужна справка, введи /help!", message.Chat.Id);
+        // }
 
         private string DeletePlant(Message message, App app)
         {

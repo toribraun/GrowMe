@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Domain;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using Application;
-    using Telegram.Bot.Types;
     using Telegram.Bot.Types.ReplyMarkups;
 
     public class KeyboardController
@@ -20,12 +17,12 @@ namespace UserInterface
         public IReplyMarkup GetMainMenuKeyboard()
         {
             return new ReplyKeyboardMarkup(
-            new[]
+            new List<KeyboardButton[]>()
             {
-                new KeyboardButton("Мои растения"),
-                new KeyboardButton("Добавить растение"),
-                new KeyboardButton("Удалить растение"),
-                new KeyboardButton("Расписание")
+                new KeyboardButton[] { new KeyboardButton("Мои растения") },
+                new KeyboardButton[] { new KeyboardButton("Добавить растение") },
+                new KeyboardButton[] { new KeyboardButton("Удалить растение") },
+                new KeyboardButton[] { new KeyboardButton("Расписание") }
             }, true);
         }
 
@@ -46,24 +43,6 @@ namespace UserInterface
                 .Append(new KeyboardButton[] { "Отмена" });
             keyboard = new ReplyKeyboardMarkup(buttons, true);
             return keyboard;
-        }
-
-        internal IReplyMarkup GetKeyboard(Answer answer)
-        {
-            var user = this.app.GetUserById(answer.UserId);
-            if (answer.Status == UserStatus.DeletePlantByName)
-            {
-                return this.GetUserPlantsKeyboard(this.app
-                        .GetPlantsByUser(user)
-                        .Split("\n"));
-            }
-
-            if (answer.Status == UserStatus.DefaultStatus)
-            {
-                return this.GetMainMenuKeyboard();
-            }
-
-            return this.GetCancelKeyboard();
         }
     }
 }

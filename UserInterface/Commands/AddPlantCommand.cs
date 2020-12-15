@@ -1,16 +1,9 @@
-﻿using System;
-using Domain;
-
-namespace UserInterface.Commands
+﻿namespace UserInterface.Commands
 {
-    using Application;
-    using Telegram.Bot.Types;
-
-    internal class AddPlantCommand : IUserCommand
+    internal class AddPlantCommand
     {
         private string[] names;
 
-        public event Action<long, UserStatus> OnAddPlant;
 
         public AddPlantCommand()
         {
@@ -19,10 +12,10 @@ namespace UserInterface.Commands
 
         public string[] Names => this.names;
 
-        public Answer Execute(Message message, App app)
-        {
-            app.ChangeUserStatus(message.Chat.Id, UserStatus.SendPlantName);
-            return new Answer("Как назовём твоё растение?", message.Chat.Id, UserStatus.SendPlantName);
-        }
+        // public Answer Execute(Message message, App app)
+        // {
+        //     app.ChangeUserStatus(message.Chat.Id, UserStatus.SendPlantName);
+        //     return new Answer("Как назовём твоё растение?", message.Chat.Id, UserStatus.SendPlantName);
+        // }
     }
 }

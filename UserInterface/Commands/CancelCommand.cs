@@ -1,9 +1,6 @@
 ﻿namespace UserInterface.Commands
 {
-    using Application;
-    using Telegram.Bot.Types;
-
-    internal class CancelCommand : IUserCommand
+    internal class CancelCommand
     {
         private string[] names;
 
@@ -14,10 +11,10 @@
 
         public string[] Names => this.names;
 
-        public Answer Execute(Message message, App app)
-        {
-            app.Cancel(message.Chat.Id);
-            return new Answer("Ну хорошо, ты снова в главном меню", message.Chat.Id);
-        }
+        // public Answer Execute(Message message, App app)
+        // {
+        //     app.Cancel(message.Chat.Id);
+        //     return new Answer("Ну хорошо, ты снова в главном меню", message.Chat.Id);
+        // }
     }
 }

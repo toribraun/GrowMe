@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
-
-namespace UserInterface
+﻿namespace UserInterface
 {
     using System;
     using System.Collections.Generic;
@@ -11,8 +9,6 @@ namespace UserInterface
 
     public class CommandExecutor : ICommandExecutor
     {
-        private readonly Dictionary<string, IUserCommand> allCommands;
-        private readonly Dictionary<UserStatus, List<string>> commandsByStatus;
         private readonly Dictionary<string, EventHandler<long>> commandsByEvents;
         private App app;
 
@@ -67,10 +63,6 @@ namespace UserInterface
 
         public CommandExecutor(App app)
         {
-            allCommands = new Dictionary<string, IUserCommand>();
-            commandsByStatus = new Dictionary<UserStatus, List<string>>();
-            allCommands.Add("/notacommand", new Commands.NonexistingCommand());
-            AddCommand(new Commands.StartCommand());
             OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
             OnCancel += (sender, userId) => app.Cancel(userId);
             OnGetPlantsToDelete += (sender, userId) => app.GetPlantsToDeleteEvent(userId);
@@ -94,13 +86,12 @@ namespace UserInterface
                 { "/help", OnHelp },
                 { "расписание", OnSchedule }
             };
-            // this.app = app;
         }
 
         public void ExecuteCommandMessage(Message message)
         {
             var userId = message.Chat.Id;
-            var userName = message.Chat.Username;
+            var userName = message.Chat.FirstName;
             var textMessage = message.Text;
             OnCheckUserExist?.Invoke(this, new EventUserArgs(userId, userName));
 
@@ -126,40 +117,6 @@ namespace UserInterface
             OnSendPhoto?.Invoke(
                 this,
                 new EventPhotoArgs(message.Chat.Id, message.Caption, message.Photo.Last().FileId));
-        }
-
-        public Dictionary<string, IUserCommand> Commands => this.allCommands;
-
-        public Dictionary<UserStatus, List<string>> CommandsByStatus => this.commandsByStatus;
-
-        public void AddCommand(IUserCommand command, params UserStatus[] possibleStatus)
-        {
-            foreach (var status in possibleStatus)
-            {
-                this.AddCommand(command, status);
-            }
-        }
-
-        public void AddCommand(IUserCommand command, UserStatus status = UserStatus.DefaultStatus)
-        {
-            if (!this.CommandsByStatus.ContainsKey(status))
-            {
-                this.commandsByStatus.Add(status, new List<string>());
-                this.commandsByStatus[status].Add("/notacommand");
-            }
-
-            foreach (var name in command.Names)
-            {
-                if (!this.CommandsByStatus[status].Contains(name))
-                {
-                    this.commandsByStatus[status].Add(name);
-                }
-
-                if (!this.Commands.ContainsKey(name))
-                {
-                    this.allCommands.Add(name, command);
-                }
-            }
         }
 
         // public Answer ExecuteCommand(Message message)

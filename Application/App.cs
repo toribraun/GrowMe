@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Application.Replies;
@@ -40,7 +39,7 @@ namespace Application
             }
         }
 
-        public void SendNotifications(object obj)
+        private void SendNotifications(object obj)
         {
             foreach (var plant in plantRepository.GetPlantsToWater())
             {
@@ -78,8 +77,8 @@ namespace Application
             FirstPhotoId = plant.FirstPhotoId,
             LastPhotoId = plant.LastPhotoId,
         };
-        
-        public bool AddUser(long userId, string userName)
+
+        private bool AddUser(long userId, string userName)
         {
             if (userRepository.GetUser(userId) != null)
                 return false;
@@ -87,12 +86,7 @@ namespace Application
             return true;
         }
 
-        public bool UserExists(long userId)
-        {
-            return userRepository.GetUser(userId) != null;
-        }
-
-        public User GetUserById(long userId)
+        private User GetUserById(long userId)
         {
             var userRecord = userRepository.GetUser(userId);
             return new User(userRecord.Id, userRecord.Name);
@@ -100,58 +94,11 @@ namespace Application
 
         public void GetWeekSchedule(long userId)
         {
-            OnReply?.Invoke(this, new ReplyOnSchedule(userId,
-                GetResultScheduleLine(GetPlantsToWaterByDayDictionary(userId))));
-        }
-
-        private static Dictionary<DateTime, List<string>> GetEmptyPlantsToWaterByDayDictionary()
-        {
-            var plantsToWaterByDay = new Dictionary<DateTime, List<string>>();
-
-            for (var i = 1; i < 8; i++)
-            {
-                plantsToWaterByDay.Add(DateTime.Today.Date.AddDays(i), new List<string>());
-            }
-
-            return plantsToWaterByDay;
-        }
-
-        private Dictionary<DateTime, List<string>> GetPlantsToWaterByDayDictionary(long userId)
-        {
-            var plantsToWaterByDay = GetEmptyPlantsToWaterByDayDictionary();
-            var plantNames = GetPlantsByUser(new User(userId)).Split('\n');
-
-            foreach (var plantName in plantNames)
-            {
-                if (plantName == "") break;
-                var currentPlant = GetPlantByUser(new User(userId), plantName);
-                for (var nextDate = currentPlant.NextWateringTime.Date;
-                    nextDate < DateTime.Today.Date.AddDays(8);
-                    nextDate = nextDate.AddDays(currentPlant.WateringInterval))
-                {
-                    plantsToWaterByDay[nextDate].Add(currentPlant.Name);
-                }
-            }
-
-            return plantsToWaterByDay;
-        }
-        
-        private static string GetResultScheduleLine(Dictionary<DateTime, List<string>> plantsToWaterByDay)
-        {
-            var result = "";
-            foreach (var date in plantsToWaterByDay.Keys)
-            {
-                var currentPlants = "";
-
-                foreach (var plant in plantsToWaterByDay[date])
-                {
-                    currentPlants += $"{plant}, ";
-                }
-
-                result += $"{date.Day}.{date.Month}: {currentPlants.TrimEnd(',', ' ')}\n";
-            }
-
-            return result;
+            var user = GetUserById(userId);
+            var plants = GetPlantsByUser(user).Split('\n').TakeWhile(p => p != "")
+                .Select(p => GetPlantByUser(user, p));
+            var stats = new Schedule(plants);
+            OnReply?.Invoke(this, new ReplyOnSchedule(userId, stats.GetStatistics()));
         }
 
         public void GetHelp(long userId)
@@ -262,25 +209,25 @@ namespace Application
             OnReply?.Invoke(this, new ReplyOnSetPlantPhoto(userId, plantName, isAdded));
         }
 
-        public string GetPlantsByUser(User user)
+        private string GetPlantsByUser(User user)
         {
             return plantRepository.GetPlantsByUser(user.Id)
                 .Aggregate("", (message, plant) => message + $"{plant.Name}\n");
         }
-        
-        public Plant GetPlantByUser(User user, string plantName)
+
+        private Plant GetPlantByUser(User user, string plantName)
         {
             return PlantRecordToPlant(plantRepository
                 .GetPlantsByUser(user.Id)
                 .FirstOrDefault(p => p.Name == plantName));
         }
 
-        public void ChangeUserStatus(long userId, UserStatus newStatus)
+        private void ChangeUserStatus(long userId, UserStatus newStatus)
         {
             userRepository.UpdateUser(new UserRecord(userId) {Status = (UserStatusRecord)(int)newStatus});
         }
 
-        public UserStatus GetUserStatus(long userId)
+        private UserStatus GetUserStatus(long userId)
         {
             return UserRecordToUser(userRepository.GetUser(userId)).Status;
         }

@@ -1,9 +1,6 @@
 ﻿namespace UserInterface.Commands
 {
-    using Application;
-    using Telegram.Bot.Types;
-
-    internal class GetPlantsCommand : IUserCommand
+    internal class GetPlantsCommand
     {
         private string[] names;
 
@@ -14,16 +11,16 @@
 
         public string[] Names => this.names;
 
-        public Answer Execute(Message message, App app)
-        {
-            var user = app.GetUserById(message.Chat.Id);
-            var plants = app.GetPlantsByUser(user);
-            if (plants.Length == 0)
-            {
-                return new Answer("У тебя пока не записано растений!", message.Chat.Id);
-            }
-
-            return new Answer("Вот все твои растения, про которые мне известно:\n" + plants, message.Chat.Id);
-        }
+        // public Answer Execute(Message message, App app)
+        // {
+        //     var user = app.GetUserById(message.Chat.Id);
+        //     var plants = app.GetPlantsByUser(user);
+        //     if (plants.Length == 0)
+        //     {
+        //         return new Answer("У тебя пока не записано растений!", message.Chat.Id);
+        //     }
+        //
+        //     return new Answer("Вот все твои растения, про которые мне известно:\n" + plants, message.Chat.Id);
+        // }
     }
 }

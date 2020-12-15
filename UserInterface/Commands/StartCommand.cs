@@ -1,11 +1,6 @@
-﻿using System;
-
-namespace UserInterface.Commands
+﻿namespace UserInterface.Commands
 {
-    using Application;
-    using Telegram.Bot.Types;
-
-    internal class StartCommand : IUserCommand
+    internal class StartCommand
     {
         private string[] names;
 
@@ -16,17 +11,17 @@ namespace UserInterface.Commands
 
         public string[] Names => this.names;
 
-        public Answer Execute(Message message, App app)
-        {
-            var chat = message.Chat;
-            if (app.AddUser(chat.Id, chat.FirstName))
-            {
-                return new Answer($"Привет, {chat.FirstName}!\n" +
-                    $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
-                    $"Введи /help для справки.", message.Chat.Id);
-            }
-
-            return new Answer($"Снова здравствуй, {chat.FirstName}! Если нужна справка - введи /help", message.Chat.Id);
-        }
+        // public Answer Execute(Message message, App app)
+        // {
+        //     var chat = message.Chat;
+        //     if (app.AddUser(chat.Id, chat.FirstName))
+        //     {
+        //         return new Answer($"Привет, {chat.FirstName}!\n" +
+        //             $"Я - бот, который будет помогать тебе в уходе за растениями.\n" +
+        //             $"Введи /help для справки.", message.Chat.Id);
+        //     }
+        //
+        //     return new Answer($"Снова здравствуй, {chat.FirstName}! Если нужна справка - введи /help", message.Chat.Id);
+        // }
     }
 }
