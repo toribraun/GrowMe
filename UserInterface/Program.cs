@@ -10,6 +10,7 @@
         public static void Main(string[] args)
         {
             var token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
+            var timerPeriod = 1000 * 3600 * 3;
             var container = new StandardKernel();
 
             container.Bind<IUserRepository>()
@@ -23,7 +24,9 @@
             container.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
             container.Bind<KeyboardController>().ToSelf().InSingletonScope();
             container.Bind<TelegramBotClient>().ToConstant(new TelegramBotClient(token));
+            container.Bind<WateringTimer>().ToSelf();
             container.Bind<UI>().ToSelf().InSingletonScope();
+            var timer = container.Get<WateringTimer>();
             var ui = container.Get<UI>();
             var app = container.Get<App>();
 
@@ -39,6 +42,7 @@
             // executor.OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
             // executor.OnHelp += (sender, userId) => app.GetHelp(userId);
 
+            timer.InitTimer(timerPeriod);
             ui.Run();
         }
     }

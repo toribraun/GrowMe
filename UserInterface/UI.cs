@@ -48,13 +48,20 @@ namespace UserInterface
 
         public void BuildMessageToUser(IReply reply)
         {
-            if (reply.GetType() == typeof(ReplyOnGetPlantPhoto))
+            if (reply is ReplyOnGetPlantPhoto replyOnGetPlantPhoto)
             {
-                if (((ReplyOnGetPlantPhoto)reply).IsExist)
+                if (replyOnGetPlantPhoto.IsExist)
                 {
-                    SendAnswerWithPhoto((ReplyOnGetPlantPhoto)reply);
+                    SendAnswerWithPhoto(replyOnGetPlantPhoto);
                     return;
                 }
+
+                var answerText = "У этого растения пока нет фотографий.\n\n" +
+                                 "Чтобы добавить фотографию своего растения, просто отправь её мне. " +
+                                 "Не забудь добавить в описании имя растения, иначе я тебя не пойму :(";
+                var keyboard = keyboardController.GetMainMenuKeyboard();
+                SendAnswer(reply.UserId, answerText, keyboard);
+                return;
             }
 
             SendAnswer(reply.UserId, GetTextAnswer(reply), GetKeyboard(reply));
@@ -137,6 +144,7 @@ namespace UserInterface
             }
             else if (reply.GetType() == typeof(ReplyOnGetPlantPhoto) && !((ReplyOnGetPlantPhoto)reply).IsExist)
             {
+                // перенести в Bui
                 answerText = "У этого растения пока нет фотографий.\n\n" +
                              "Чтобы добавить фотографию своего растения, просто отправь её мне. " +
                              "Не забудь добавить в описании имя растения, иначе я тебя не пойму :(";

@@ -12,7 +12,7 @@ namespace Application
     {
         private IUserRepository userRepository;
         private IPlantRepository plantRepository;
-        private Timer timer;
+        // private Timer timer; // отдельный класс, зависящий от фзз
         public event EventHandler<EventArgsSendNotifications> SendNotification;
         public event EventHandler<IReply> OnReply; 
 
@@ -20,14 +20,14 @@ namespace Application
         {
             this.userRepository = userRepository;
             this.plantRepository = plantRepository;
-            InitTimer();
+            /// InitTimer(); // в точке входа
         }
 
-        private void InitTimer()
-        {
-            var tm = new TimerCallback(SendNotifications);
-            timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
-        }
+        // public void InitTimer()
+        // {
+        //     var tm = new TimerCallback(SendNotifications);
+        //     timer = new Timer(tm, new object(), 0, 1000 * 3600 * 3);
+        // }
 
         public class EventArgsSendNotifications
         {
@@ -40,7 +40,7 @@ namespace Application
             }
         }
 
-        private void SendNotifications(object obj)
+        public void SendNotifications(object obj)
         {
             foreach (var plant in GetPlantsToWater())
             {
