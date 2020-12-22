@@ -1,11 +1,7 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using Telegram.Bot.Types.InputFiles;
-
 namespace UserInterface
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using Application;
     using Application.Replies;
@@ -20,36 +16,16 @@ namespace UserInterface
         private ICommandExecutor executor;
         private KeyboardController keyboardController;
         private TelegramBotClient client;
-        private string token;
 
-        public UI(ICommandExecutor executor, KeyboardController keyboardController)
+        public UI(TelegramBotClient client, ICommandExecutor executor, KeyboardController keyboardController)
         {
+            this.client = client;
             this.executor = executor;
             this.keyboardController = keyboardController;
-            this.token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
         }
 
         public void Run()
         {
-            // var commands = new IUserCommand[]
-            //     {
-            //         new Commands.StartCommand(),
-            //         new Commands.HelpCommand(),
-            //         new Commands.GetPlantsCommand(),
-            //         new Commands.AddPlantCommand(),
-            //         new Commands.DeletePlantCommand(),
-            //         new Commands.CancelCommand()
-            //     };
-            // var commonStatus = new UserStatus[] { UserStatus.DefaultStatus, UserStatus.SendUserName };
-            // for (var i = 0; i < 5; i++)
-            // {
-            //     executor.AddCommand(commands[i], commonStatus);
-            // }
-            //
-            // executor.AddCommand(commands[5], UserStatus.SendPlantName);
-            // executor.AddCommand(commands[5], UserStatus.SendPlantWateringInterval);
-            // executor.AddCommand(commands[5], UserStatus.DeletePlantByName);
-            client = new TelegramBotClient(token);
             client.OnMessage += BotOnMessageReceived;
             client.StartReceiving();
             Console.ReadLine();
@@ -72,7 +48,20 @@ namespace UserInterface
 
         public void BuildMessageToUser(IReply reply)
         {
-            var keyboard = keyboardController.GetMainMenuKeyboard();
+            if (reply.GetType() == typeof(ReplyOnGetPlantPhoto))
+            {
+                if (((ReplyOnGetPlantPhoto)reply).IsExist)
+                {
+                    SendAnswerWithPhoto((ReplyOnGetPlantPhoto)reply);
+                    return;
+                }
+            }
+
+            SendAnswer(reply.UserId, GetTextAnswer(reply), GetKeyboard(reply));
+        }
+
+        private string GetTextAnswer(IReply reply)
+        {
             var answerText = "Я не понимаю тебя. Если нужна справка, введи /help!";
             if (reply.GetType() == typeof(ReplyOnGetPlants))
             {
@@ -86,7 +75,6 @@ namespace UserInterface
                                  $"{string.Join('\n', ((ReplyOnGetPlants)reply).PlantsName)}\n\n" +
                                  $"Выбери растение, о котором хочешь узнать подробнее.\n" +
                                  $"Нажми «Отмена», чтобы вернуться в главное меню.";
-                    keyboard = keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlants)reply).PlantsName.ToArray());
                 }
             }
             else if (reply.GetType() == typeof(ReplyOnStart))
@@ -109,26 +97,14 @@ namespace UserInterface
             else if (reply.GetType() == typeof(ReplyOnGetPlantsToDelete))
             {
                 var plantsNames = ((ReplyOnGetPlantsToDelete)reply).PlantsName.ToArray();
-                if (plantsNames.Length > 0)
-                {
-                    answerText = "Какое растение ты хочешь удалить?";
-                    keyboard = keyboardController.GetUserPlantsKeyboard(plantsNames.ToArray());
-                }
-                else
-                {
-                    answerText = "У тебя пока не записано растений!";
-                }
+                answerText = plantsNames.Length > 0 ? "Какое растение ты хочешь удалить?" :
+                    "У тебя пока не записано растений!";
             }
             else if (reply.GetType() == typeof(ReplyOnDeletedPlant))
             {
-                if (((ReplyOnDeletedPlant)reply).IsDeleted)
-                {
-                    answerText = $"Растение {((ReplyOnDeletedPlant)reply).DeletedPlantName} удалено!";
-                }
-                else
-                {
-                    answerText = "У тебя нет растения с таким именем!";
-                }
+                answerText = ((ReplyOnDeletedPlant)reply).IsDeleted ?
+                    $"Растение {((ReplyOnDeletedPlant)reply).DeletedPlantName} удалено!" :
+                    "У тебя нет растения с таким именем!";
             }
             else if (reply.GetType() == typeof(ReplyOnWantedAddPlant))
             {
@@ -142,8 +118,6 @@ namespace UserInterface
                 {
                     answerText = "Как назовём твоё растение?";
                 }
-
-                keyboard = keyboardController.GetCancelKeyboard();
             }
             else if (reply.GetType() == typeof(ReplyOnSetPlantName))
             {
@@ -156,21 +130,13 @@ namespace UserInterface
                     answerText = "Как часто нужно поливать твоё растение? Укажи интервал в сутках.\n" +
                                  "Например, если твоё растение нужно поливать каждые три дня, напиши: 3.";
                 }
-
-                keyboard = keyboardController.GetCancelKeyboard();
             }
             else if (reply.GetType() == typeof(ReplyOnSetWateringInterval))
             {
                 answerText = "Поздравляю, твоё растение добавлено!";
             }
-            else if (reply.GetType() == typeof(ReplyOnGetPlantPhoto))
+            else if (reply.GetType() == typeof(ReplyOnGetPlantPhoto) && !((ReplyOnGetPlantPhoto)reply).IsExist)
             {
-                if (((ReplyOnGetPlantPhoto)reply).IsExist)
-                {
-                    SendAnswerWithPhoto((ReplyOnGetPlantPhoto)reply);
-                    return;
-                }
-
                 answerText = "У этого растения пока нет фотографий.\n\n" +
                              "Чтобы добавить фотографию своего растения, просто отправь её мне. " +
                              "Не забудь добавить в описании имя растения, иначе я тебя не пойму :(";
@@ -187,15 +153,24 @@ namespace UserInterface
             }
             else if (reply.GetType() == typeof(ReplyOnHelp))
             {
-                answerText = "Здесь должна быть справка";
+                answerText = "Мои растения – информация о всех твоих растениях, включая первую и последнюю фотографию.\n" +
+                             "Чтобы добавить новую фотографию растения, просто отправь её боту, подписав имя растения.\n\n" +
+                             "Для добавления и удаления растений используй соответсвующие кнопки.\n\n" +
+                             "Расписание – расписание полива растений на неделю.";
             }
 
-            SendAnswer(reply.UserId, answerText, keyboard);
+            return answerText;
         }
 
-        private void SendAnswer(Chat chat, string answer, IReplyMarkup rm)
+        private IReplyMarkup GetKeyboard(IReply reply)
         {
-            client.SendTextMessageAsync(chat.Id, answer, replyMarkup: rm);
+            if (reply.GetType() == typeof(ReplyOnGetPlants))
+                return keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlants)reply).PlantsName.ToArray());
+            if (reply.GetType() == typeof(ReplyOnGetPlantsToDelete))
+                return keyboardController.GetUserPlantsKeyboard(((ReplyOnGetPlantsToDelete)reply).PlantsName.ToArray());
+            if (reply.GetType() == typeof(ReplyOnWantedAddPlant) || reply.GetType() == typeof(ReplyOnSetPlantName))
+                return keyboardController.GetCancelKeyboard();
+            return keyboardController.GetMainMenuKeyboard();
         }
 
         private void SendAnswer(long userId, string answer, IReplyMarkup rm)
@@ -223,7 +198,10 @@ namespace UserInterface
 
         public void SendNotification(long chatId, string plantName)
         {
-            var answer = $"Самое время полить {plantName}!";
+            var answer = $"Самое время полить {plantName}!\n\n" +
+                         "Не забудь добавить новую фотографию своего растения. " +
+                         "Так ты сможешь наглядно увидеть его рост.\n\n" +
+                         $"Чтобы добавить новую фотографию, просто отправь её боту с текстом: {plantName}.";
             client.SendTextMessageAsync(chatId, answer);
         }
     }

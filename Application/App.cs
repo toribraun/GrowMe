@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Application.Replies;
@@ -41,10 +42,23 @@ namespace Application
 
         private void SendNotifications(object obj)
         {
-            foreach (var plant in plantRepository.GetPlantsToWater())
+            foreach (var plant in GetPlantsToWater())
             {
                 SendNotification?.Invoke(this, new EventArgsSendNotifications(plant.UserId, plant.Name));
             }
+        }
+
+        private IEnumerable<PlantRecord> GetPlantsToWater()
+        {
+            var now = DateTime.Now;
+            return plantRepository.GetAllPlants()
+                .Where(plant => plant.NextWateringTime <= now)
+                .Select(plant =>
+                {
+                    plant.UpdateNextWateringTime();
+                    plantRepository.UpdatePlant(plant);
+                    return plant;
+                });
         }
         
         private User UserRecordToUser(UserRecord userRecord) => new User(
@@ -157,10 +171,6 @@ namespace Application
                 }
                 case UserStatus.DeletePlantByName:
                     OnReply?.Invoke(this, new ReplyOnDeletedPlant(userId, message, DeletePlant(userId, message)));
-                    break;
-                case UserStatus.DefaultStatus:
-                    break;
-                case UserStatus.SendUserName:
                     break;
                 default:
                     OnReply?.Invoke(this, new ReplyOnNotCommand(userId));

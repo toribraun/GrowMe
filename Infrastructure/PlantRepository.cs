@@ -21,7 +21,7 @@ namespace Infrastructure
 
         public void UpdatePlant(PlantRecord currentPlant)
         {
-            var plants = plantTable.GetAllData().ToList();
+            var plants = GetAllPlants().ToList();
             for (var i = 0; i < plants.Count; i++)
             {
                 if (!plants[i].Equals(currentPlant)) 
@@ -34,24 +34,13 @@ namespace Infrastructure
             }
             plantTable.WriteAllData(plants);
         }
+        
+        public IEnumerable<PlantRecord> GetAllPlants() => plantTable.GetAllData().ToList();
 
         public void DeletePlant(PlantRecord currentPlant)
         {
             currentPlant.ShouldBeDeleted = true;
             UpdatePlant(currentPlant);
-        }
-
-        public IEnumerable<PlantRecord> GetPlantsToWater()
-        {
-            var now = DateTime.Now;
-            return plantTable.GetAllData()
-                .Where(plant => plant.NextWateringTime <= now)
-                .Select(plant =>
-                {
-                    plant.UpdateNextWateringTime();
-                    UpdatePlant(plant);
-                    return plant;
-                });
         }
 
         public void AddNewPlant(PlantRecord newPlant)

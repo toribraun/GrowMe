@@ -3,11 +3,13 @@
     using Application;
     using Infrastructure;
     using Ninject;
+    using Telegram.Bot;
 
     public static class Program
     {
         public static void Main(string[] args)
         {
+            var token = "1017290663:AAF1ZG3q_hGOZF5rCfJDh-WbT-NLgGGMW98";
             var container = new StandardKernel();
 
             container.Bind<IUserRepository>()
@@ -20,10 +22,13 @@
 
             container.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
             container.Bind<KeyboardController>().ToSelf().InSingletonScope();
+            container.Bind<TelegramBotClient>().ToConstant(new TelegramBotClient(token));
             container.Bind<UI>().ToSelf().InSingletonScope();
-            var executor = container.Get<CommandExecutor>();
             var ui = container.Get<UI>();
             var app = container.Get<App>();
+
+            app.SendNotification += (sender, args) => ui.SendNotification(args.UserId, args.PlantName);
+            app.OnReply += (sender, reply) => ui.BuildMessageToUser(reply);
 
             // executor.OnStart += (sender, eventArgsStart) => app.StartEvent(eventArgsStart.UserId, eventArgsStart.UserName);
             // executor.OnCancel += (sender, userId) => app.Cancel(userId);
@@ -33,8 +38,6 @@
             // executor.OnNonexistingCommand += (sender, commandArgs) => app.HandleNonexistingCommand(commandArgs.UserId, commandArgs.Message);
             // executor.OnCheckUserExist += (sender, checkUserArgs) => app.CheckUserExistEvent(checkUserArgs.UserId, checkUserArgs.UserName);
             // executor.OnHelp += (sender, userId) => app.GetHelp(userId);
-            app.SendNotification += (sender, args) => ui.SendNotification(args.UserId, args.PlantName);
-            app.OnReply += (sender, reply) => ui.BuildMessageToUser(reply);
 
             ui.Run();
         }

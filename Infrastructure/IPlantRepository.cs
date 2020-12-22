@@ -7,7 +7,7 @@ namespace Infrastructure
         IEnumerable<PlantRecord> GetPlantsByUser(long userId);
         void UpdatePlant(PlantRecord currentPlant);
         void DeletePlant(PlantRecord currentPlant);
-        IEnumerable<PlantRecord> GetPlantsToWater();
+        IEnumerable<PlantRecord> GetAllPlants();
         void AddNewPlant(PlantRecord newPlant);
     }
 }

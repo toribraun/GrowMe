@@ -2,16 +2,13 @@
 {
     using System.Collections.Generic;
     using System.Linq;
-    using Application;
     using Telegram.Bot.Types.ReplyMarkups;
 
     public class KeyboardController
     {
-        private App app;
 
-        public KeyboardController(App app)
+        public KeyboardController()
         {
-            this.app = app;
         }
 
         public IReplyMarkup GetMainMenuKeyboard()
@@ -38,6 +35,8 @@
         internal IReplyMarkup GetUserPlantsKeyboard(string[] plants)
         {
             ReplyKeyboardMarkup keyboard;
+            if (plants.Length == 0)
+                return GetMainMenuKeyboard();
             var buttons = plants
                 .Select(p => new KeyboardButton[] { p })
                 .Append(new KeyboardButton[] { "Отмена" });
